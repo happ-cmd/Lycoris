@@ -12,6 +12,7 @@ local Logger = require("Utility/Logger")
 local playersService = game:GetService("Players")
 local runService = game:GetService("RunService")
 local replicatedStorage = game:GetService("ReplicatedStorage")
+local lighting = game:GetService("Lighting")
 
 -- Old hooked functions.
 local oldDestroy = nil
@@ -297,15 +298,38 @@ local function onIndex(...)
 	return oldIndex(...)
 end
 
+---Modify ambience color.
+---@param value Color3
+---@param args table
+local function modifyAmbienceColor(value, args)
+	if not Toggles.OriginalAmbienceColor.Value then
+		return Options.AmbienceColor.Value
+	end
+
+	local brightness = Options.OriginalAmbienceColorBrightness.Value
+	local red, green, blue = value.R, value.G, value.B
+
+	red = math.min(red + brightness, 255)
+	green = math.min(green + brightness, 255)
+	blue = math.min(blue + brightness, 255)
+
+	return Color3.fromRGB(red, green, blue)
+end
+
 ---On new index.
 ---@return any
 local function onNewIndex(...)
 	local args = { ... }
 	local self = args[1]
 	local index = args[2]
+	local value = args[3]
 
 	if self.Name == "CharacterHandler" and (index == "Parent" or index == "parent") then
 		return
+	end
+
+	if self == lighting and index == "Ambient" and Toggles.ModifyAmbience.Value then
+		modifyAmbienceColor(value, args)
 	end
 
 	return oldNewIndex(...)
