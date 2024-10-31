@@ -165,6 +165,119 @@ function PlayerTab.initMovementSection(groupbox)
 	})
 end
 
+---Initialize removal section.
+---@param groupbox table
+function PlayerTab.initRemovalSection(groupbox)
+	local umacDepBox = groupbox:AddDependencyBox()
+
+	groupbox:AddToggle("NoEchoModifiers", {
+		Text = "No Echo Modifiers",
+		Tooltip = "Remove any 'Echo Modifiers' instances on the client.",
+		Default = false,
+	})
+
+	groupbox:AddToggle("NoKillBricks", {
+		Text = "No Kill Bricks",
+		Tooltip = "Remove any 'Kill Brick' parts on the client.",
+		Default = false,
+	})
+
+	groupbox:AddToggle("NoStun", {
+		Text = "No Stun",
+		Tooltip = "Remove any incoming 'Stun' effects from the server.",
+		Default = false,
+	})
+
+	groupbox:AddToggle("NoSpeedDebuff", {
+		Text = "No Speed Debuff",
+		Tooltip = "Remove any incoming 'Speed Debuff' effects from the server.",
+		Default = false,
+	})
+
+	groupbox:AddToggle("NoFallDamage", {
+		Text = "No Fall Damage",
+		Tooltip = "Remove any 'Fall Damage' requests to the server.",
+		Default = false,
+	})
+
+	groupbox:AddToggle("NoAcid", {
+		Text = "Anti Acid",
+		Tooltip = "Remove any 'Acid Damage' requests to the server.",
+		Default = false,
+	})
+
+	groupbox:AddToggle("AntiFire", {
+		Text = "Anti Fire",
+		Tooltip = "Attempt to remove 'Burning' effects through automatic sliding.",
+		Default = false,
+	})
+
+	groupbox:AddToggle("AntiWind", {
+		Text = "Anti Wind",
+		Tooltip = "Remove any 'Wind' effects from the server.",
+		Default = false,
+	})
+
+	groupbox:AddToggle("NoFog", {
+		Text = "No Fog",
+		Tooltip = "Atmosphere and Fog effects are hidden.",
+		Default = false,
+	})
+
+	groupbox:AddToggle("NoBlind", {
+		Text = "No Blind",
+		Tooltip = "Blinding effects are hidden.",
+		Default = false,
+	})
+
+	groupbox:AddToggle("NoBlur", {
+		Text = "No Blur",
+		Tooltip = "Blurry effects are hidden.",
+		Default = false,
+	})
+
+	groupbox:AddToggle("NoJumpCooldown", {
+		Text = "No Jump Cooldown",
+		Tooltip = "Remove any 'Jump Cooldown' effects from the server.",
+		Default = false,
+	})
+
+	groupbox:AddToggle("NoShadows", {
+		Text = "No Shadows",
+		Tooltip = "Shadow effects are hidden.",
+		Default = false,
+	})
+
+	groupbox
+		:AddToggle("ModifyAmbience", {
+			Text = "Modify Ambience",
+			Tooltip = "Modify the ambience of the game.",
+			Default = false,
+		})
+		:AddColorPicker("AmbienceColor", {
+			Default = Color3.new(150, 150, 150),
+		})
+
+	groupbox:AddToggle("OriginalAmbienceColor", {
+		Text = "Original Ambience Color",
+		Tooltip = "Use the game's original ambience color instead of a custom one.",
+		Default = false,
+	})
+
+	umacDepBox:AddSlider("OriginalAmbienceColorBrightness", {
+		Text = "Original Ambience Brightness",
+		Default = 0,
+		Min = 0,
+		Max = 255,
+		Suffix = "br",
+		Rounding = 0,
+	})
+
+	umacDepBox:SetupDependencies({
+		{ Toggles.OriginalAmbienceColor, true },
+	})
+end
+
 ---Initialize tab.
 function PlayerTab.init(window)
 	-- Create tab.
@@ -172,6 +285,7 @@ function PlayerTab.init(window)
 
 	-- Initialize sections.
 	PlayerTab.initMovementSection(tab:AddLeftGroupbox("Movement"))
+	PlayerTab.initRemovalSection(tab:AddRightGroupbox("Removal"))
 end
 
 -- Return PlayerTab module.

@@ -16,6 +16,9 @@ local IntelligenceFarm = require("Features/Automation/InteligenceFarm")
 ---@module Features.Player.Movement
 local Movement = require("Features/Player/Movement")
 
+---@module Features.Player.Removal
+local Removal = require("Features/Player/Removal")
+
 ---Initialize features.
 function Features.init()
 	AstralFarm.init()
@@ -23,6 +26,7 @@ function Features.init()
 	CharismaFarm.init()
 	IntelligenceFarm.init()
 	Movement.init()
+	Removal.init()
 end
 
 ---Detach features.
@@ -32,6 +36,7 @@ function Features.detach()
 	CharismaFarm.detach()
 	IntelligenceFarm.detach()
 	Movement.detach()
+	Removal.detach()
 end
 
 -- Return Features module.

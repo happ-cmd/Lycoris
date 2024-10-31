@@ -25,14 +25,19 @@ local movementMaid = Maid.new()
 -- Instances.
 local attachTarget = nil
 local bloodJarTarget = nil
-local originalCanCollideMap = {}
 local originalAgilityValue = nil
+local originalCanCollideMap = {}
 
 -- Signals.
 local heartbeat = Signal.new(runService.Heartbeat)
 
 ---@note: These setters are completely unnecessary - they're used to make the code look cleaner.
 ---It's really ugly when we want to return and set something at the same time.
+
+---Set original agility value.
+local function resetOriginalAgilityValue()
+	originalAgilityValue = nil
+end
 
 ---Set attach target
 ---@param target Model?
@@ -244,15 +249,13 @@ end
 ---@param character Model
 local function resetAgilitySpoofer(character)
 	local agility = character:FindFirstChild("Agility")
-	if not agility then
-		return
-	end
-
-	if not originalAgilityValue then
-		return
+	if not agility or not originalAgilityValue then
+		return resetOriginalAgilityValue()
 	end
 
 	agility.Value = originalAgilityValue
+
+	originalAgilityValue = nil
 end
 
 ---Tween to altars.
