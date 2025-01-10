@@ -10,9 +10,6 @@ local Signal = require("Utility/Signal")
 ---@module Game.Timings.SaveManager
 local SaveManager = require("Game/Timings/SaveManager")
 
----@module Utility.TaskSpawner
-local TaskSpawner = require("Utility/TaskSpawner")
-
 ---@module Features.Combat.Targeting
 local Targeting = require("Features/Combat/Targeting")
 
@@ -25,19 +22,23 @@ local Configuration = require("Utility/Configuration")
 ---@module Utility.InstanceWrapper
 local InstanceWrapper = require("Utility/InstanceWrapper")
 
+---@module Utility.TaskSpawner
+local TaskSpawner = require("Utility/TaskSpawner")
+
+---@module Game.InputClient
+local InputClient = require("Game/InputClient")
+
 ---@class AnimatorDefender: Defender
 ---@field animator Animator
 ---@field entity Model
 ---@field heffects Instance[]
 ---@field track AnimationTrack?
----@field tasks Maid
 ---@field maid Maid
 local AnimatorDefender = setmetatable({}, { __index = Defender })
 AnimatorDefender.__index = AnimatorDefender
 
 -- Services.
 local players = game:GetService("Players")
-local stats = game:GetService("Stats")
 local replicatedStorage = game:GetService("ReplicatedStorage")
 
 ---Logger notify.
@@ -159,6 +160,21 @@ function AnimatorDefender:initial(timing)
 	return true
 end
 
+---Repeat until parry end.
+---@param track AnimationTrack
+---@param timing AnimationTiming
+function AnimatorDefender:rpue(track, timing)
+	while self.track.IsPlaying do
+		task.wait(timing:rpd() - self:ping())
+
+		if not self:initial(timing) then
+			continue
+		end
+
+		InputClient.parry()
+	end
+end
+
 ---Process animation track.
 ---@param track AnimationTrack
 function AnimatorDefender:process(track)
@@ -176,52 +192,40 @@ function AnimatorDefender:process(track)
 		return
 	end
 
-	local network = stats:FindFirstChild("Network")
-	if not network then
-		return
-	end
-
-	local serverStatsItem = network:FindFirstChild("ServerStatsItem")
-	if not serverStatsItem then
-		return
-	end
-
-	local dataPingItem = serverStatsItem:FindFirstChild("Data Ping")
-	if not dataPingItem then
-		return
-	end
-
 	---@note: Clean up previous tasks that are still waiting or suspended because they're in a different track.
 	self.tasks:clean()
 	self.track = track
 	self.heffects = {}
 
-	for _, action in next, timing.actions:get() do
-		local dataPingInSeconds = dataPingItem:GetValue() / 1000
-		local actionTask = TaskSpawner.delay(
-			string.format("Action_%s", action._type),
-			action:when() - dataPingInSeconds,
-			self.handle,
-			self,
-			action
-		)
-
-		self:log(
-			timing,
-			"Added action '%s' (%.2fs) with ping '%.2f' subtracted.",
-			action.name,
-			action:when(),
-			dataPingInSeconds
-		)
-
-		self.tasks:mark(actionTask)
+	---@note: Start processing the timing. Add the actions if we're not RPUE.
+	if not timing.rpue then
+		return self:actions(timing)
 	end
+
+	local rtask = TaskSpawner.delay(
+		string.format("RPUE_%s", timing.name),
+		timing:rsd() - self:ping(),
+		self.rpue,
+		self,
+		track,
+		timing
+	)
+
+	self:log(
+		timing,
+		"Added RPUE '%s' (%.2fs, then every %.2fs) with relevant ping subtracted.",
+		timing.name,
+		timing:rsd(),
+		timing:rpd()
+	)
+
+	self.tasks:mark(rtask)
 end
 
 ---Detach AnimatorDefender object.
 function AnimatorDefender:detach()
-	self.maid:clean()
 	self.tasks:clean()
+	self.maid:clean()
 	self = nil
 end
 
@@ -244,7 +248,6 @@ function AnimatorDefender.new(animator)
 
 	self.heffects = {}
 	self.maid = Maid.new()
-	self.tasks = Maid.new()
 
 	self.maid:mark(entityDescendantAdded:connect("AnimatorDefender_OnDescendantAdded", function(descendant)
 		if

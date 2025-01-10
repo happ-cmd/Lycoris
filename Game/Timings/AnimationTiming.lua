@@ -21,7 +21,7 @@ function AnimationTiming:rsd()
 	return self._rsd / 1000
 end
 
--- Getter for repeat start delay in seconds.
+-- Getter for repeat parry delay in seconds.
 ---@return number
 function AnimationTiming:rpd()
 	return self._rpd / 1000

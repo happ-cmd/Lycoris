@@ -4,19 +4,47 @@ local Logger = require("Utility/Logger")
 ---@module Game.InputClient
 local InputClient = require("Game/InputClient")
 
+---@module Utility.Maid
+local Maid = require("Utility/Maid")
+
+---@module Utility.TaskSpawner
+local TaskSpawner = require("Utility/TaskSpawner")
+
 ---@class Defender
----@field maid Maid
+---@field tasks Maid
 local Defender = {}
 Defender.__index = Defender
 
 -- Services.
 local players = game:GetService("Players")
+local stats = game:GetService("Stats")
 
 ---Check if we're in a valid state to proceed with action handling. Extend me.
 ---@param action Action
 ---@return boolean
 function Defender:valid(action)
 	return true
+end
+
+---Get ping.
+---@return number
+function Defender:ping()
+	local network = stats:FindFirstChild("Network")
+	if not network then
+		return
+	end
+
+	local serverStatsItem = network:FindFirstChild("ServerStatsItem")
+	if not serverStatsItem then
+		return
+	end
+
+	local dataPingItem = serverStatsItem:FindFirstChild("Data Ping")
+	if not dataPingItem then
+		return
+	end
+
+	return dataPingItem:GetValue() / 1000
 end
 
 ---Handle action.
@@ -60,9 +88,25 @@ function Defender:handle(action)
 	end
 end
 
+---Add actions from timing to defender object.
+---@param timing Timing
+function Defender:actions(timing)
+	for _, action in next, timing.actions:get() do
+		local ping = self:ping()
+		local atask =
+			TaskSpawner.delay(string.format("Action_%s", action._type), action:when() - ping, self.handle, self, action)
+
+		self:log(timing, "Added action '%s' (%.2fs) with ping '%.2f' subtracted.", action.name, action:when(), ping)
+
+		self.tasks:mark(atask)
+	end
+end
+
 ---Create new Defender object.
 function Defender.new()
-	return setmetatable({}, Defender)
+	local self = setmetatable({}, Defender)
+	self.tasks = Maid.new()
+	return self
 end
 
 -- Return Defender module.
