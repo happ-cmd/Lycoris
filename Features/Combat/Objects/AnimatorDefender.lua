@@ -155,20 +155,29 @@ end
 ---Repeat until parry end.
 ---@param track AnimationTrack
 ---@param timing AnimationTiming
-function AnimatorDefender:rpue(track, timing)
+---@param index number
+function AnimatorDefender:rpue(track, timing, index)
 	if not self.track.IsPlaying then
 		return
 	end
 
 	self:mark(
-		Task.new(string.format("RPUE_%s", timing.name), timing:rpd() - self:ping(), self.rpue, self, track, timing)
+		Task.new(
+			string.format("RPUE_%s_%i", timing.name, index),
+			timing:rpd() - self:ping(),
+			self.rpue,
+			self,
+			track,
+			timing,
+			index + 1
+		)
 	)
 
 	if not self:initial(timing) then
 		return
 	end
 
-	self:log(timing, "Action 'RPUE Parry' is being executed.")
+	self:log(timing, "(%i) Action 'RPUE Parry' is being executed.", index)
 
 	InputClient.parry()
 end
