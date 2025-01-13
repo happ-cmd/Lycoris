@@ -7,7 +7,7 @@ local Profiler = require("Utility/Profiler")
 ---@module Utility.Logger
 local Logger = require("Utility/Logger")
 
----Spawn delayed task. Tasks will be killed upon execution.
+---Spawn delayed task.
 ---@param label string
 ---@param delay number
 ---@param callback function
@@ -19,28 +19,15 @@ function TaskSpawner.delay(label, delay, callback, ...)
 		Logger.trace("onTaskFunctionError - (%s) - %s", label, error)
 	end
 
-	-- Store task reference.
-	local taskReference = nil
-
 	-- Wrap callback in profiler and error handling.
 	local taskFunction = Profiler.wrap(label, function(...)
-		return xpcall(function(...)
-			-- Run callback.
-			callback(...)
-
-			-- Kill task on the next cycle.
-			task.defer(task.cancel, taskReference)
-		end, onTaskFunctionError, ...)
+		return xpcall(callback, onTaskFunctionError, ...)
 	end)
 
-	-- Spawn delayed task.
-	taskReference = task.delay(delay, taskFunction, ...)
-
-	-- Return reference.
-	return taskReference
+	return task.delay(delay, taskFunction, ...)
 end
 
----Spawn task. Tasks will be killed upon execution.
+---Spawn task.
 ---@param label string
 ---@param callback function
 ---@vararg any
@@ -51,25 +38,13 @@ function TaskSpawner.spawn(label, callback, ...)
 		Logger.trace("onTaskFunctionError - (%s) - %s", label, error)
 	end
 
-	-- Store task reference.
-	local taskReference = nil
-
 	-- Wrap callback in profiler and error handling.
 	local taskFunction = Profiler.wrap(label, function(...)
-		return xpcall(function(...)
-			-- Run callback.
-			callback(...)
-
-			-- Kill task on the next cycle.
-			task.defer(task.cancel, taskReference)
-		end, onTaskFunctionError, ...)
+		return xpcall(callback, onTaskFunctionError, ...)
 	end)
 
-	-- Spawn delayed task.
-	taskReference = task.spawn(taskFunction, ...)
-
 	-- Return reference.
-	return taskReference
+	return task.spawn(taskFunction, ...)
 end
 
 -- Return TaskSpawner module.
