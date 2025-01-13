@@ -14,8 +14,8 @@ function Task:blocking()
 		return false
 	end
 
-	---@note: Allow us to do inputs up until a certain amount of time (0.3s) before the task happens.
-	return os.clock() >= self.when - 0.3
+	---@note: Allow us to do inputs up until a certain amount of time (0.6s) before the task happens.
+	return os.clock() >= self.when - 0.6
 end
 
 ---Cancel task.
