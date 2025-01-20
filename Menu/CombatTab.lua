@@ -177,7 +177,7 @@ function CombatTab.initAttackAssistanceSection(groupbox)
 		Max = 2,
 		Default = 0.6,
 		Suffix = "s",
-		Rounding = 0,
+		Rounding = 1,
 	})
 end
 
