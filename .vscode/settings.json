@@ -50,7 +50,6 @@
         "get_comm_channel",
         "firetouchinterest"
     ],
-    "editor.formatOnSave": false,
     "robloxLsp.suggestedImports.importIgnore": [
         "**/_Index/**",
         "Output/"

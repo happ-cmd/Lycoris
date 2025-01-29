@@ -1,6 +1,9 @@
 -- GameTab module.
 local GameTab = {}
 
+---@module Features.Game.Bestiary
+local Bestiary = require("Features/Game/Bestiary")
+
 ---Initialize local character section.
 ---@param groupbox table
 function GameTab.initLocalCharacterSection(groupbox)
@@ -259,13 +262,14 @@ function GameTab.initPlayerMonitoringSection(groupbox)
 		Text = "Show Roblox Chat",
 		Default = true,
 	})
-	
+
 	local bestiaryToggle = groupbox:AddToggle("ShowBestiary", {
-		Text = "Show Bestiary",
+		Text = "Show Bestiary UI",
 		Default = false,
+		Callback = Bestiary.visible,
 	})
-	
-	bestiaryToggle:AddKeyPicker("bestiaryKeybind", { Default = "N/A", SyncToggleState = true, Text = "Bestiary UI" })
+
+	bestiaryToggle:AddKeyPicker("BestiaryKeybind", { Default = "N/A", SyncToggleState = true, Text = "Bestiary UI" })
 
 	groupbox:AddToggle("PlayerProximity", {
 		Text = "Player Proximity Notifications",
