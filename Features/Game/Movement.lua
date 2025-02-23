@@ -1,8 +1,21 @@
 ---@module Utility.Configuration
 local Configuration = require("Utility/Configuration")
 
+---@module Utility.OriginalStoreManager
+local OriginalStoreManager = require("Utility/OriginalStoreManager")
+
+---@module Utility.Maid
+local Maid = require("Utility/Maid")
+
+-- Maids.
+local movementMaid = Maid.new()
+
 -- Services.
 local players = game:GetService("Players")
+local replicatedStorage = game:GetService("ReplicatedStorage")
+
+-- AA-Gun map.
+local aaGunMap = OriginalStoreManager.new()
 
 ---Update anti air bypass.
 ---@param rootPart BasePart
@@ -22,7 +35,7 @@ local function updateAABypass(rootPart)
 	if not officeCreature then
 		return players.LocalPlayer:RequestStreamAroundAsync(modOffice:GetPivot().Position, 100)
 	end
-	
+
 	local effectReplicator = replicatedStorage:FindFirstChild("EffectReplicator")
 	if not effectReplicator then
 		return
@@ -32,13 +45,15 @@ local function updateAABypass(rootPart)
 	local knockedEffect = effectReplicatorModule:FindEffect("Knocked", true)
 
 	if knockedEffect then
-		knockedEffect.Disabled = true
+		aaGunMap:add(knockedEffect, "Disabled", true)
 	end
 
-	for _,v in next, rootPart.Parent.Torso:GetChildren() do
-		if v:IsA("Motor6D") then
-			v.Enabled = true
+	for _, child in next, rootPart.Parent.Torso:GetChildren() do
+		if child:IsA("Motor6D") then
+			continue
 		end
+
+		aaGunMap:add(child, "Enabled", true)
 	end
 
 	officeCreature.CollisionGroup = "Default"
@@ -56,17 +71,11 @@ return LPH_NO_VIRTUALIZE(function()
 	---@module Utility.Signal
 	local Signal = require("Utility/Signal")
 
-	---@module Utility.Maid
-	local Maid = require("Utility/Maid")
-
 	---@module Utility.InstanceWrapper
 	local InstanceWrapper = require("Utility/InstanceWrapper")
 
 	---@module Utility.OriginalStore
 	local OriginalStore = require("Utility/OriginalStore")
-
-	---@module Utility.OriginalStoreManager
-	local OriginalStoreManager = require("Utility/OriginalStoreManager")
 
 	---@module Utility.ControlModule
 	local ControlModule = require("Utility/ControlModule")
@@ -80,10 +89,6 @@ return LPH_NO_VIRTUALIZE(function()
 	-- Services.
 	local runService = game:GetService("RunService")
 	local userInputService = game:GetService("UserInputService")
-	local replicatedStorage = game:GetService("ReplicatedStorage")
-
-	-- Maids.
-	local movementMaid = Maid.new()
 
 	-- Instances.
 	local bloodJarTarget = nil
@@ -342,6 +347,8 @@ return LPH_NO_VIRTUALIZE(function()
 
 		if Configuration.expectToggleValue("AAGunBypass") then
 			updateAABypass(rootPart)
+		else
+			aaGunMap:restore()
 		end
 
 		if Configuration.expectToggleValue("Speedhack") then
