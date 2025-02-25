@@ -361,7 +361,7 @@ function SaveManager.init()
 	local playerRemoving = Signal.new(players.PlayerRemoving)
 
 	-- Auto-saving.
-	playerRemoving:connect(function(player)
+	playerRemoving:connect("SaveManager_PlayerRemoving", function(player)
 		if player ~= players.LocalPlayer then
 			return
 		end
