@@ -114,6 +114,24 @@ local updateSanityTracker = LPH_NO_VIRTUALIZE(function()
 	sanityTextLabel.Parent = currencyFrame
 	sanityTextLabel.Visible = true
 
+	local mainColor = Color3.fromRGB(0, 191, 255)
+
+	if sanity.Value <= sanity.MaxValue * 0.70 then
+		mainColor = Color3.fromRGB(255, 239, 94)
+	end
+
+	if sanity.Value <= sanity.MaxValue * 0.50 then
+		mainColor = Color3.fromRGB(255, 216, 110)
+	end
+
+	if sanity.Value <= sanity.MaxValue * 0.40 then
+		mainColor = Color3.fromRGB(255, 111, 0)
+	end
+
+	if sanity.Value <= sanity.MaxValue * 0.20 then
+		mainColor = Color3.fromRGB(255, 0, 0)
+	end
+
 	-- Amount.
 	local amountLabel = sanityTextLabel:FindFirstChild("Amount")
 	if not amountLabel then
@@ -121,7 +139,7 @@ local updateSanityTracker = LPH_NO_VIRTUALIZE(function()
 	end
 
 	amountLabel.Text = string.format("%i / %i", sanity.Value, sanity.MaxValue)
-	amountLabel.TextColor3 = Color3.fromRGB(2, 177, 255)
+	amountLabel.TextColor3 = mainColor
 
 	-- Icon.
 	local icon = sanityTextLabel:FindFirstChild("Icon")
@@ -130,7 +148,7 @@ local updateSanityTracker = LPH_NO_VIRTUALIZE(function()
 	end
 
 	icon.Image = "http://www.roblox.com/asset/?id=16865012250"
-	icon.ImageColor3 = Color3.fromRGB(0, 162, 255)
+	icon.ImageColor3 = mainColor
 	icon.ImageRectOffset = Vector2.new(0, 0)
 	icon.ImageRectSize = Vector2.new(0, 0)
 
