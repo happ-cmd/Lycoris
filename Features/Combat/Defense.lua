@@ -332,7 +332,7 @@ local onSpellEvent = LPH_NO_VIRTUALIZE(function(name, data)
 	-- Set the current position & string.
 	if name == "set" then
 		cws = data
-		cwp = 0
+		cwp = 1
 		cwt = os.clock()
 	end
 
