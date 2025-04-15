@@ -620,6 +620,7 @@ local function handleStartMenu()
 end
 
 ---Start EchoFarm module.
+---@todo: Clean-up and de-duplicate me.
 function EchoFarm.start()
 	if not machine:is("none") then
 		return Logger.notify("Echo farm is already running.")
@@ -637,6 +638,24 @@ function EchoFarm.start()
 	local humanoidRootPart = character and character:WaitForChild("HumanoidRootPart")
 
 	local renderStepped = Signal.new(runService.RenderStepped)
+	local playerRemoving = Signal.new(players.PlayerRemoving)
+
+	echoFarmMaid:add(playerRemoving:connect("EchoFarm_PlayerRemoving", function(player)
+		if player ~= players.LocalPlayer then
+			return
+		end
+
+		-- Mark that we're coming from nearby check.
+		PersistentData.set("shw", true)
+
+		-- Server hop, cancel transitions.
+		machine:cancelTransition(machine.currentTransitioningEvent)
+		machine:serverhop()
+
+		-- Clean maids.
+		stateMaid:clean()
+	end))
+
 	echoFarmMaid:add(renderStepped:connect("EchoFarm_NearbyPlayerCheck", runNearbyPlayerCheck))
 
 	if not runNearbyPlayerCheck() then
