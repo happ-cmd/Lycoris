@@ -338,11 +338,7 @@ def main():
         save_data({}, BASE_TIMING_FILE)
         print(f"Created empty base file: {BASE_TIMING_FILE}")
 
-    # Initial state setup
-    # 1. Rebuild local truth from patches so we have authoritative baseline
-    rebuild_truth_from_patches()
-
-    # 2. If a remote truth already exists, determine which is most recent.
+    # 1. If a remote truth already exists, determine which is most recent.
     if os.path.exists(TARGET_TRUTH_FILE) and os.path.getsize(TARGET_TRUTH_FILE) > 0 and os.path.exists(TRUTH_TIMING_FILE):
         try:
             local_mod_time = os.path.getmtime(TRUTH_TIMING_FILE)
@@ -350,7 +346,7 @@ def main():
 
             local_truth_data = load_data(TRUTH_TIMING_FILE)
             remote_truth_data = load_data(TARGET_TRUTH_FILE)
-
+            print(local_mod_time, remote_mod_time)
             # If files are identical, do nothing.
             if str(local_truth_data) == str(remote_truth_data):
                 print("[*] Local and remote truth files are identical.")
