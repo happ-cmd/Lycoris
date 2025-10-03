@@ -49,7 +49,7 @@ return function(self, timing)
 		windup = (0.150 / self.track.Speed) + 0.150
 	elseif data.type == "Spear" then
 		windup = (0.163 / self.track.Speed) + 0.100
-		windup += 0.100 / data.ss
+		windup += 0.050 / data.ss
 	end
 
 	if not windup then

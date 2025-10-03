@@ -8,8 +8,18 @@ local Action = getfenv().Action
 ---@diagnostic disable-next-line: unused-local
 local ProjectileTracker = getfenv().ProjectileTracker
 
----@module Features.Combat.Defense
-local Defense = getfenv().Defense
+---Check if orbs have all been destroyed.
+local function areOrbsStillParented(orbs)
+	for _, orb in next, orbs do
+		if not orb.Parent then
+			continue
+		end
+
+		return true
+	end
+
+	return false
+end
 
 ---Module function.
 ---@param self AnimatorDefender
@@ -24,30 +34,76 @@ return function(self, timing)
 		return candidate.Name == "IntBangs"
 	end)
 
+	if self:distance(self.entity) <= 20 then
+		local action = Action.new()
+		action._when = 400
+		action._type = "Start Block"
+		action.name = "Close Ether Barrage Start"
+		action.ihbc = true
+		self:action(timing, action)
+
+		local secondAction = Action.new()
+		secondAction._when = 1000
+		secondAction._type = "End Block"
+		secondAction.name = "Close Ether Barrage End"
+		secondAction.ihbc = true
+		return self:action(timing, secondAction)
+	end
+
 	task.wait(0.7 - self.rtt())
-
-	local action = Action.new()
-	action._when = 0
-	action._type = "Parry"
-	action.name = "Int Beam Part"
-
-	local pt = PartTiming.new()
-	pt.uhc = true
-	pt.duih = true
-	pt.fhb = true
-	pt.name = "IntBeamProjectile"
-	pt.hitbox = Vector3.new(10, 10, 10)
-	pt.actions:push(action)
 
 	local model = tracker:wait()
 	if not model then
 		return
 	end
 
-	local center = model:FindFirstChild("Center")
-	if not center then
-		return
+	local orbs = {}
+
+	for _, part in pairs(model:GetChildren()) do
+		if not part:IsA("BasePart") then
+			continue
+		end
+
+		if not part.Name:match("etherorb") then
+			continue
+		end
+
+		orbs[#orbs + 1] = part
 	end
 
-	Defense.cdpo(center, pt)
+	local blockStarted = false
+
+	while task.wait() do
+		for _, orb in next, orbs do
+			if not areOrbsStillParented(orbs) then
+				local secondAction = Action.new()
+				secondAction._when = 0
+				secondAction._type = "End Block"
+				secondAction.name = "Ether Barrage End"
+				secondAction.ihbc = true
+				return self:action(timing, secondAction)
+			end
+
+			if not orb or not orb.Parent then
+				continue
+			end
+
+			if self:distance(orb) >= 20 then
+				continue
+			end
+
+			if blockStarted then
+				continue
+			end
+
+			local action = Action.new()
+			action._when = 0
+			action._type = "Start Block"
+			action.name = "Ether Barrage Start"
+			action.ihbc = true
+			self:action(timing, action)
+
+			blockStarted = true
+		end
+	end
 end

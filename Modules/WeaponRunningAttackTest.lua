@@ -13,6 +13,9 @@ return function(self, timing)
 		return
 	end
 
+	timing.pfh = true
+	timing.duih = false
+
 	local windup = nil
 
 	-- Windup + 0-speed duration.
@@ -34,6 +37,9 @@ return function(self, timing)
 	elseif data.type == "Rifle" then
 		windup = (0.169 / self.track.Speed) + 0.180
 		windup += 0.100 / data.ss
+	elseif data.type == "Sword" then
+		windup = (0.135 / self.track.Speed) + 0.150
+		windup += 0.150 / data.ss
 	elseif data.type == "Rapier" then
 		windup = (0.238 / self.track.Speed) + 0.060
 	elseif data.type == "Bow" then

@@ -1,51 +1,85 @@
----@module Modules.Globals.ProjectileListener
-local ProjectileListener = getfenv().ProjectileListener
-
----@class Action
+---@type Action
 local Action = getfenv().Action
 
----@module Features.Combat.Defense
-local Defense = getfenv().Defense
+---@type ProjectileTracker
+---@diagnostic disable-next-line: unused-local
+local ProjectileTracker = getfenv().ProjectileTracker
 
----@module Game.Timings.PartTiming
-local PartTiming = getfenv().PartTiming
+---Check if orbs have all been destroyed.
+local function areOrbsStillAlive(orbs)
+	for _, orb in next, orbs do
+		if not orb.Parent then
+			continue
+		end
 
--- Listener object.
-local plistener = ProjectileListener.new("DaggerThrow")
+		if not orb:FindFirstChild("PointLight") then
+			continue
+		end
+
+		return true
+	end
+
+	return false
+end
 
 ---Module function.
 ---@param self AnimatorDefender
 ---@param timing AnimationTiming
 return function(self, timing)
-	task.wait(0.45 - self.rtt())
-
-	if self:distance(self.entity) <= 10 then
-		local action = Action.new()
-		action._when = 0
-		action._type = "Parry"
-		action.ihbc = true
-		action.name = "Ice Daggers Close"
-		return self:action(timing, action)
+	local thrown = workspace:FindFirstChild("Thrown")
+	if not thrown then
+		return
 	end
 
-	plistener:connect(function(child)
-		if child.Name ~= "IceDagger" then
-			return
+	task.wait(0.7 - self.rtt())
+
+	local orbs = {}
+
+	for _, part in pairs(thrown:GetChildren()) do
+		if not part:IsA("BasePart") then
+			continue
 		end
 
-		local action = Action.new()
-		action._when = 0
-		action._type = "Parry"
-		action.name = "Ice Dagger Part"
+		if not part.Name:match("LightningMote") then
+			continue
+		end
 
-		local pt = PartTiming.new()
-		pt.uhc = true
-		pt.duih = true
-		pt.fhb = true
-		pt.name = "IceDaggerProjectile"
-		pt.hitbox = Vector3.new(10, 10, 20)
-		pt.actions:push(action)
+		orbs[#orbs + 1] = part
+	end
 
-		Defense.cdpo(child, pt)
-	end)
+	local blockStarted = false
+
+	while task.wait() do
+		for _, orb in next, orbs do
+			if not areOrbsStillAlive(orbs) then
+				local secondAction = Action.new()
+				secondAction._when = 0
+				secondAction._type = "End Block"
+				secondAction.name = "Fleeting Sparks End"
+				secondAction.ihbc = true
+				return self:action(timing, secondAction)
+			end
+
+			if not orb or not orb.Parent then
+				continue
+			end
+
+			if self:distance(orb) >= 50 then
+				continue
+			end
+
+			if blockStarted then
+				continue
+			end
+
+			local action = Action.new()
+			action._when = 0
+			action._type = "Start Block"
+			action.name = "Fleeting Sparks Start"
+			action.ihbc = true
+			self:action(timing, action)
+
+			blockStarted = true
+		end
+	end
 end
