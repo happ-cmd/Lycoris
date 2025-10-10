@@ -106,7 +106,7 @@ return LPH_NO_VIRTUALIZE(function()
 			end
 
 			if not pcall(function()
-				return bone.CanCollide
+				return bone.CanCollide ~= nil
 			end) then
 				continue
 			end
