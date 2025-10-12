@@ -41,7 +41,6 @@ local EffectListener = require("Features/Combat/EffectListener")
 ---@field animator Animator
 ---@field offset number?
 ---@field entity Model
----@field heffects Instance[]
 ---@field keyframes Action[]
 ---@field timing AnimationTiming?
 ---@field pbdata table<AnimationTrack, PlaybackData> Playback data to be recorded.
@@ -144,6 +143,7 @@ AnimatorDefender.pfh = LPH_NO_VIRTUALIZE(function(self, options)
 	clone.spredict = false
 	clone.hcolor = Color3.new(0, 1, 1)
 	clone.mcolor = Color3.new(1, 1, 0)
+	clone:ucache()
 
 	local result = false
 	local store = OriginalStore.new()
@@ -161,11 +161,13 @@ end)
 ---@return boolean
 AnimatorDefender.phd = LPH_NO_VIRTUALIZE(function(self, timing, options)
 	for _, cframe in next, PositionHistory.stepped(self.entity, HISTORY_STEPS, timing.phds) or {} do
+		print(cframe)
 		local clone = options:clone()
 		clone.spredict = false
 		clone.cframe = cframe
 		clone.hcolor = Color3.new(0.839215, 0.976470, 0.537254)
 		clone.mcolor = Color3.new(0.564705, 0, 1)
+		clone:ucache()
 
 		if not self:hc(clone, nil) then
 			continue
@@ -173,6 +175,7 @@ AnimatorDefender.phd = LPH_NO_VIRTUALIZE(function(self, timing, options)
 
 		return true
 	end
+	print("noooo we return false")
 end)
 
 ---Run our facing extrapolation / interpolation.
@@ -244,14 +247,6 @@ AnimatorDefender.valid = LPH_NO_VIRTUALIZE(function(self, timing, action)
 	end
 
 	if
-		not timing.ha
-		and #self.heffects >= 1
-		and (players:GetPlayerFromCharacter(self.entity) or self.entity:FindFirstChild("HumanController"))
-	then
-		return self:notify(timing, "Entity got attack cancelled.")
-	end
-
-	if
 		not timing.imb
 		and root:FindFirstChild("MegalodauntBroken")
 		and not players:GetPlayerFromCharacter(self.entity)
@@ -268,6 +263,7 @@ AnimatorDefender.valid = LPH_NO_VIRTUALIZE(function(self, timing, action)
 	options.ptime = self:fsecs(timing)
 	options.action = action
 	options.entity = self.entity
+	options:ucache()
 
 	local info = RepeatInfo.new(timing, self.rdelay(), self:uid(10))
 	info.track = self.track
@@ -482,7 +478,6 @@ end)
 function AnimatorDefender:clean()
 	-- Empty data.
 	self.keyframes = {}
-	self.heffects = {}
 
 	-- Clean through base method.
 	Defender.clean(self)
@@ -500,7 +495,6 @@ function AnimatorDefender.new(animator, manimations)
 
 	local self = setmetatable(Defender.new(), AnimatorDefender)
 	local animationPlayed = Signal.new(animator.AnimationPlayed)
-	local entityDescendantAdded = Signal.new(entity.DescendantAdded)
 
 	self.animator = animator
 	self.manimations = manimations
@@ -510,30 +504,11 @@ function AnimatorDefender.new(animator, manimations)
 	self.timing = nil
 	self.offset = nil
 
-	self.heffects = {}
 	self.keyframes = {}
 	self.pbdata = {}
 	self.rpbdata = {}
 	self.sct = {}
 	self.tsc = {}
-
-	self.maid:mark(
-		entityDescendantAdded:connect(
-			"AnimatorDefender_OnDescendantAdded",
-			LPH_NO_VIRTUALIZE(function(descendant)
-				if
-					descendant.Name ~= "PunchBlood"
-					and descendant.Name ~= "PunchEffect"
-					and descendant.Name ~= "BloodSpray"
-					and not (descendant:IsA("ParticleEmitter") and descendant.Texture == "rbxassetid://7216855595")
-				then
-					return
-				end
-
-				self.heffects[#self.heffects + 1] = descendant
-			end)
-		)
-	)
 
 	self.maid:mark(animationPlayed:connect(
 		"AnimatorDefender_OnAnimationPlayed",

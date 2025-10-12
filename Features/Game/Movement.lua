@@ -218,7 +218,7 @@ return LPH_NO_VIRTUALIZE(function()
 
 	---Update tween to back.
 	local function updateTweenToBack()
-		local validTargets = Finder.geir(300, Configuration.expectToggleValue("IgnorePlayers") and false or nil)
+		local validTargets = Finder.geir(300, Configuration.expectToggleValue("AttachIgnorePlayers"))
 		if not validTargets then
 			return true
 		end
@@ -331,10 +331,8 @@ return LPH_NO_VIRTUALIZE(function()
 			return
 		end
 
-		if Configuration.expectToggleValue("TweenToBack") then
-			if not updateTweenToBack() then
-				cachedTarget = nil
-			end
+		if not Configuration.expectToggleValue("TweenToBack") or not updateTweenToBack() then
+			cachedTarget = nil
 		end
 
 		if Configuration.expectToggleValue("TweenToObjectives") then
