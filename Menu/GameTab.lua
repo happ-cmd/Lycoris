@@ -187,24 +187,6 @@ function GameTab.initLocalCharacterSection(groupbox)
 		Rounding = 0,
 	})
 
-	groupbox
-		:AddToggle("TweenToObjectives", {
-			Text = "Tween To Objectives",
-			Tooltip = "Smoothly move to objectives inside of Ethiron and Chaser's boss fights.",
-			Default = false,
-			Callback = function(state)
-				if state then
-					return
-				end
-
-				Tweening.stop("TweenToObjective")
-			end,
-		})
-		:AddKeyPicker(
-			"TweenToObjectivesKeybind",
-			{ Default = "N/A", SyncToggleState = true, Text = "Tween To Objectives" }
-		)
-
 	groupbox:AddToggle("AutoSprint", {
 		Text = "Auto Sprint",
 		Tooltip = "Instantly invoke a sprint when pressing a key in any direction.",

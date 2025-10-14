@@ -259,60 +259,6 @@ return LPH_NO_VIRTUALIZE(function()
 		return true
 	end
 
-	---Tween to altars.
-	---@param rootPart BasePart
-	---@param bossRoomContainer Folder
-	local function tweenToAltars(rootPart, bossRoomContainer)
-		local emptyAltars = Finder.sdparts(bossRoomContainer, function(part)
-			return part.Name == "Altar" and not part:FindFirstChild("BoneSpear")
-		end, 200)
-
-		if not emptyAltars then
-			return Tweening.stop("TweenToObjective")
-		end
-
-		local closestEmptyAltar = emptyAltars[1]
-		if not closestEmptyAltar then
-			return Tweening.stop("TweenToObjective")
-		end
-
-		Tweening.goal("TweenToObjective", closestEmptyAltar, false)
-	end
-
-	---Tween to blood jars.
-	---@param rootPart BasePart
-	---@param chaser Model
-	local function tweenToBloodJars(rootPart, chaser)
-		local hrp = chaser:FindFirstChild("HumanoidRootPart")
-		if not hrp then
-			return Tweening.stop("TweenToObjective")
-		end
-
-		local jar = hrp:FindFirstChild("BloodJar")
-		if not jar then
-			return Tweening.stop("TweenToObjective")
-		end
-
-		Tweening.goal("TweenToObjective", jar, false)
-	end
-
-	---Update tween to objectives.
-	---@param rootPart BasePart
-	local function updateTweenToObjectives(rootPart)
-		local bossRoom = workspace:FindFirstChild("TrueAvatarBossRoom")
-		local bossRoomContainer = bossRoom and bossRoom:FindFirstChild("Floor1Stuff") or nil
-
-		if bossRoomContainer then
-			return tweenToAltars(rootPart, bossRoomContainer)
-		end
-
-		local chaserEntity = Finder.entity("chaser")
-
-		if chaserEntity then
-			return tweenToBloodJars(rootPart, chaserEntity)
-		end
-	end
-
 	---Update movement.
 	---@param dt number
 	local function updateMovement(dt)
@@ -334,10 +280,6 @@ return LPH_NO_VIRTUALIZE(function()
 
 		if not Configuration.expectToggleValue("TweenToBack") or not updateTweenToBack() then
 			cachedTarget = nil
-		end
-
-		if Configuration.expectToggleValue("TweenToObjectives") then
-			updateTweenToObjectives(rootPart)
 		end
 
 		if Configuration.expectToggleValue("AgilitySpoof") then

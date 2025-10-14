@@ -34,6 +34,9 @@ local Configuration = require("Utility/Configuration")
 ---@module Utility.OriginalStoreManager
 local OriginalStoreManager = require("Utility/OriginalStoreManager")
 
+---@module Features.Visuals.Objects.ChestESP
+local ChestESP = require("Features/Visuals/Objects/ChestESP")
+
 ---@module Utility.InstanceWrapper
 local InstanceWrapper = require("Utility/InstanceWrapper")
 
@@ -42,6 +45,12 @@ local Table = require("Utility/Table")
 
 ---@module Utility.Logger
 local Logger = require("Utility/Logger")
+
+---@module Features.Visuals.Objects.ObeliskESP
+local ObeliskESP = require("Features/Visuals/Objects/ObeliskESP")
+
+---@module Features.Visuals.Objects.BoneAltarESP
+local BoneAltarESP = require("Features/Visuals/Objects/BoneAltarESP")
 
 -- Visuals module.
 local Visuals = { bdata = nil, drinfo = nil }
@@ -1092,9 +1101,13 @@ local onThrownChildAdded = LPH_NO_VIRTUALIZE(function(child)
 		return emplaceObject(child, PartESP.new("OwlFeathers", child, "Owl Feathers"))
 	end
 
+	if name == "BoneSpear" then
+		return emplaceObject(child, PartESP.new("BoneSpear", child, "Bone Spear"))
+	end
+
 	visualsMaid:mark(TaskSpawner.spawn("Visuals_ChestCheck", function()
 		if child:IsA("Model") and child:WaitForChild("LootUpdated", 0.1) then
-			return emplaceObject(child, ModelESP.new("Chest", child, "Chest"))
+			return emplaceObject(child, ChestESP.new("Chest", child, "Chest"))
 		end
 	end))
 end)
@@ -1187,7 +1200,7 @@ onWorkspaceChildAdded = LPH_NO_VIRTUALIZE(function(child)
 	end
 
 	if name == "Obelisk" then
-		return emplaceObject(child, ModelESP.new("Obelisk", child, "Obelisk"))
+		return emplaceObject(child, ObeliskESP.new("Obelisk", child, "Obelisk"))
 	end
 
 	if name:match("ArmorBrick") then
@@ -1212,6 +1225,10 @@ onWorkspaceChildAdded = LPH_NO_VIRTUALIZE(function(child)
 
 	if name == "MantraObelisk" then
 		return emplaceObject(child, ModelESP.new("MantraObelisk", child, "Mantra Obelisk"))
+	end
+
+	if name == "BoneAltar" then
+		return emplaceObject(child, BoneAltarESP.new("BoneAltar", child, "Bone Altar"))
 	end
 
 	visualsMaid:mark(TaskSpawner.spawn("Visuals_BRWeaponCheck", function()
