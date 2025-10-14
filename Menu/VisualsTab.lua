@@ -326,6 +326,36 @@ function VisualsTab.initBaseESPSection(identifier, groupbox)
 	return identifier, enableDepBox
 end
 
+---Add Chest ESP section.
+---@param identifier string
+---@param depbox table
+function VisualsTab.addChestESP(identifier, depbox)
+	depbox:AddToggle(Configuration.identify(identifier, "HideIfOpened"), {
+		Text = "Hide If Opened",
+		Default = false,
+	})
+end
+
+---Add Obelisk ESP section.
+---@param identifier string
+---@param depbox table
+function VisualsTab.addObeliskESP(identifier, depbox)
+	depbox:AddToggle(Configuration.identify(identifier, "HideIfTurnedOn"), {
+		Text = "Hide If Turned On",
+		Default = false,
+	})
+end
+
+---Add Bone Altar ESP section.
+---@param identifier string
+---@param depbox table
+function VisualsTab.addBoneAltarESP(identifier, depbox)
+	depbox:AddToggle(Configuration.identify(identifier, "HideIfBoneInside"), {
+		Text = "Hide If Bone Inside",
+		Default = false,
+	})
+end
+
 ---Add Player ESP section.
 ---@param identifier string
 ---@param depbox table
@@ -467,7 +497,7 @@ function VisualsTab.init(window)
 	VisualsTab.addPlayerESP(VisualsTab.initBaseESPSection("Player", tab:AddDynamicGroupbox("Player ESP")))
 	VisualsTab.initBaseESPSection("Mob", tab:AddDynamicGroupbox("Mob ESP"))
 	VisualsTab.initBaseESPSection("NPC", tab:AddDynamicGroupbox("NPC ESP"))
-	VisualsTab.initBaseESPSection("Chest", tab:AddDynamicGroupbox("Chest ESP"))
+	VisualsTab.addChestESP(VisualsTab.initBaseESPSection("Chest", tab:AddDynamicGroupbox("Chest ESP")))
 	VisualsTab.initBaseESPSection("BagDrop", tab:AddDynamicGroupbox("Bag ESP"))
 	VisualsTab.addFilterESP(VisualsTab.initBaseESPSection("AreaMarker", tab:AddDynamicGroupbox("Area Marker ESP")))
 	VisualsTab.initBaseESPSection("JobBoard", tab:AddDynamicGroupbox("Job Board ESP"))
@@ -479,8 +509,10 @@ function VisualsTab.init(window)
 	VisualsTab.initBaseESPSection("OwlFeathers", tab:AddDynamicGroupbox("Owl Feathers ESP"))
 	VisualsTab.initBaseESPSection("GuildDoor", tab:AddDynamicGroupbox("Guild Door ESP"))
 	VisualsTab.initBaseESPSection("GuildBanner", tab:AddDynamicGroupbox("Guild Banner ESP"))
-	VisualsTab.initBaseESPSection("Obelisk", tab:AddDynamicGroupbox("Obelisk ESP"))
+	VisualsTab.addObeliskESP(VisualsTab.initBaseESPSection("Obelisk", tab:AddDynamicGroupbox("Obelisk ESP")))
+	VisualsTab.addBoneAltarESP(VisualsTab.initBaseESPSection("BoneAltar", tab:AddDynamicGroupbox("Bone Altar ESP")))
 	VisualsTab.addFilterESP(VisualsTab.initBaseESPSection("Ingredient", tab:AddDynamicGroupbox("Ingredient ESP")))
+	VisualsTab.initBaseESPSection("BoneSpear", tab:AddDynamicGroupbox("Bone Spear ESP"))
 	VisualsTab.initBaseESPSection("ArmorBrick", tab:AddDynamicGroupbox("Armor Brick ESP"))
 	VisualsTab.initBaseESPSection("BellMeteor", tab:AddDynamicGroupbox("Bell Meteor ESP"))
 	VisualsTab.initBaseESPSection("RareObelisk", tab:AddDynamicGroupbox("Rare Obelisk ESP"))

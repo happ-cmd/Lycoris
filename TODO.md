@@ -32,16 +32,22 @@
 
     Check out "Hide Void Spire Visual"
 
-- Visuals ❌
-    - Remove Opened Chests from Chest ESP ❌
-    - Dropped Bone ESP ❌
-    - Bone Altar ESP ❌
-        - Don't Show If There Is A Bone ❌
-
-- Automation ❌
+- Visuals ✅
+    - Chest ESP ✅
+        - Hide If Opened ✅ 
+    - Dropped Bone ESP ✅
+    - Bone Altar ESP ✅
+        - Hide If Bone Inside ✅
+    - Obelisk ESP ✅
+        - Hide If Turned On ✅
+  
+- Automation 🟨
     - Fish Farm 🟨
-
-    Add Auto Loot and Account for Innate Stats
+      - Auto Eat ❌
+      - Get Food At Guildbase ❌
+      - Server Hop If Players Nearby ❌
+      - Webhook Notification ❌
+      - Incorporate Auto Loot ❌
 
 - Exploit ❌
     - Mob Exploits ✅
@@ -50,34 +56,15 @@
         - Extended Item Pickup ❌
         - Extended Job Board Interact ❌
   
-
-- Full L2 Tween To Objective Perfection
-
-- Finish "Auto Fish"
-    - Auto Eat
-    - Get Food At Guildbase
-    - Server Hop If Players Nearby
-    - Webhook Notification
-    - Incorporate Auto Loot
-  
-- Finish "Auto Loot"
-    - Easy to use filters (item count + name is all you need now cuz needles)
-    - Loot all option
-    - Easy to be built into other modules
-  
 - Finish "Extra Keybinds"
     - Keybind builder to partial item search find
   
-- Finish "Echo Farm"
+- Make "Echo Farm" Consistent
 
 - Auto Ragdoll Recover
 
-- Chaser Multi Player Support
-  
-- Hide Obelisks That Are Already Turned On
-  
+- Chaser Multi Player Fixes
+
 - PVP Safety
   
 - Fix "Info Spoofing" for Guild Chat & Server 
-
-- Mob ESP Filtering
