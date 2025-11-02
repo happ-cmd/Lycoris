@@ -61,7 +61,7 @@ local MENU_TITLE = "Linoria V2 | Deepwoken"
 if LRM_UserNote then
 	MENU_TITLE = string.format(
 		"(Commit %s) Linoria V2 | Deepwoken First Release",
-		string.sub("7323c0d07c66b9d6d1d48f19cd4693dbf9d8d14c", 1, 6)
+		string.sub("19b9ceec2a820705fccbeb0cb6543dc9eb447a07", 1, 6)
 	)
 end
 

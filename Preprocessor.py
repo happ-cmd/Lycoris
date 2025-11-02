@@ -539,30 +539,31 @@ class LuaPreprocessor:
                 except Exception as e:
                     print(f"Warning: failed to read timing preprocessor stamp: {e}")
 
-            patches: list[tuple[str, dict]] = []
+            patches: list[tuple[str, dict, Optional[str]]] = []
             if patch_dir and patch_dir.exists():
                 for fp in patch_dir.glob('patch_*.json'):
                     try:
                         obj = json.loads(fp.read_text(encoding='utf-8'))
                         ts = obj.get('timestamp')
                         diff = obj.get('diff')
+                        author = obj.get('author')
                         if isinstance(ts, str) and isinstance(diff, dict):
-                            patches.append((ts, diff))
+                            patches.append((ts, diff, author))
                     except Exception:
                         continue
             # Sort by timestamp (ISO 8601 strings sort lexicographically)
             patches.sort(key=lambda t: t[0])
 
             # Determine which patches to consider based on last processed timestamp
-            to_process: list[tuple[str, dict]] = []
+            to_process: list[tuple[str, dict, Optional[str]]] = []
             if patches:
                 if last_ts is None:
                     # Start at earliest timestamp as baseline; process only later patches
                     earliest_ts = patches[0][0]
-                    to_process = [(ts, diff) for ts, diff in patches if ts > earliest_ts]
+                    to_process = [(ts, diff, author) for ts, diff, author in patches if ts > earliest_ts]
                     last_ts = earliest_ts
                 else:
-                    to_process = [(ts, diff) for ts, diff in patches if ts > last_ts]
+                    to_process = [(ts, diff, author) for ts, diff, author in patches if ts > last_ts]
 
             # Aggregate and print diffs in the same format as before
             containers = ['animation', 'part', 'sound', 'effect']
@@ -595,7 +596,7 @@ class LuaPreprocessor:
                     return idx
                 index_maps = {k: build_index(k) for k in containers}
 
-                def record_change(container: str, cid: str, change: dict):
+                def record_change(container: str, cid: str, change: dict, author: Optional[str]):
                     status = (change or {}).get('status')
                     entry = aggregate[container].get(cid)
                     if entry is None:
@@ -606,6 +607,7 @@ class LuaPreprocessor:
                                 'end_present': True,
                                 'changed_fields': set(),
                                 'name': None,
+                                'author': author,
                             }
                             data_obj = (change or {}).get('data') or {}
                             if isinstance(data_obj, dict):
@@ -618,6 +620,7 @@ class LuaPreprocessor:
                                 'end_present': False,
                                 'changed_fields': set(),
                                 'name': (change or {}).get('name'),
+                                'author': author,
                             }
                         elif status == 'modified':
                             entry = {
@@ -625,6 +628,7 @@ class LuaPreprocessor:
                                 'end_present': True,
                                 'changed_fields': set(),
                                 'name': None,
+                                'author': author,
                             }
                         else:  # Unknown / empty change entry
                             return
@@ -632,6 +636,7 @@ class LuaPreprocessor:
                     # Update existing entry according to status
                     if status == 'added':
                         entry['end_present'] = True
+                        entry['author'] = author
                         if entry['name'] is None:
                             data_obj = (change or {}).get('data') or {}
                             if isinstance(data_obj, dict):
@@ -640,6 +645,7 @@ class LuaPreprocessor:
                                     entry['name'] = nm
                     elif status == 'removed':
                         entry['end_present'] = False
+                        entry['author'] = author
                         if not entry['name']:
                             nm = (change or {}).get('name')
                             if isinstance(nm, str):
@@ -652,6 +658,7 @@ class LuaPreprocessor:
                                 if fn in IGNORE_FIELDS:
                                     continue
                                 entry['changed_fields'].add(fn)
+                        entry['author'] = author
                         # Attempt to capture a name if not already set
                         if not entry['name']:
                             nm = (change or {}).get('name')
@@ -659,13 +666,13 @@ class LuaPreprocessor:
                                 entry['name'] = nm
 
                 # Walk through all relevant patches in chronological order and accumulate net effect
-                for ts, diff in to_process:
+                for ts, diff, author in to_process:
                     for key in containers:
                         changes = diff.get(key) if isinstance(diff, dict) else None
                         if not isinstance(changes, dict):
                             continue
                         for cid, change in changes.items():
-                            record_change(key, str(cid), change or {})
+                            record_change(key, str(cid), change or {}, author)
 
                 # Classify net changes
                 for key in containers:
@@ -673,6 +680,7 @@ class LuaPreprocessor:
                         start_present = info['start_present']
                         end_present = info['end_present']
                         changed_fields = info['changed_fields']  # already excludes ignored fields
+                        author = info.get('author') or 'unknown'
 
                         # Attempt to resolve a friendly name: first any captured name, else lookup from index map, else cid.
                         name_display = info['name']
@@ -689,7 +697,7 @@ class LuaPreprocessor:
                                 typ = 'Animation' if key == 'animation' else ('Part' if key == 'part' else ('Sound' if key == 'sound' else key))
                                 if typ == 'effect':
                                     typ = 'Effect'
-                                detail_lines.append(f"+ (added) {typ} : {name_display}")
+                                detail_lines.append(f"+ (added) {typ} : {name_display} (by {author})")
                             full_len += 1
                         elif start_present and not end_present:
                             per_container_counts[key]['removed'] += 1
@@ -698,7 +706,7 @@ class LuaPreprocessor:
                                 typ = 'Animation' if key == 'animation' else ('Part' if key == 'part' else ('Sound' if key == 'sound' else key))
                                 if typ == 'effect':
                                     typ = 'Effect'
-                                detail_lines.append(f"- (removed) {typ} : {name_display}")
+                                detail_lines.append(f"- (removed) {typ} : {name_display} (by {author})")
                             full_len += 1
                         elif start_present and end_present and changed_fields:
                             per_container_counts[key]['modified'] += 1
@@ -707,7 +715,7 @@ class LuaPreprocessor:
                                 typ = 'Animation' if key == 'animation' else ('Part' if key == 'part' else ('Sound' if key == 'sound' else key))
                                 if typ == 'effect':
                                     typ = 'Effect'
-                                detail_lines.append(f"+ (changed) {typ} : {name_display}")
+                                detail_lines.append(f"+ (changed) {typ} : {name_display} (by {author})")
                             full_len += 1
                         # Cases producing no net change:
                         # - added then removed (start_present False, end_present False)
@@ -736,7 +744,7 @@ class LuaPreprocessor:
                     new_last_ts = last_ts
                     if to_process:
                         # Use the max timestamp we processed
-                        new_last_ts = max(ts for ts, _ in to_process)
+                        new_last_ts = max(ts for ts, _, _ in to_process)
                     if new_last_ts is not None:
                         stamp_path.write_text(json.dumps({"lastTimestamp": new_last_ts}, ensure_ascii=False, separators=(',', ':')), encoding='utf-8')
                 except Exception as e:

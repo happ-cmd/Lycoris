@@ -255,6 +255,10 @@ function CombatTab.initFeintDetectionSection(groupbox) end
 -- Initialize attack assistance section.
 ---@param groupbox table
 function CombatTab.initAttackAssistanceSection(groupbox)
+	if LRM_UserNote then
+		return
+	end
+
 	groupbox:AddToggle("AutoFeint", {
 		Text = "Auto Feint",
 		Default = false,
