@@ -55,11 +55,23 @@
         - Extended Item Pickup ❌
         - Extended Job Board Interact ❌
 
-Essential Fixes
+Essential Additions
 
 - 1. Auto Execute Fixes
 
 - 2. "Timing Probability" section
+  - How can we tie "Timing Names" to Probabilities when we click on it in the list?
+  
+- 3. Roll Parry, Roll M1, etc
+  
+- 4. Auto Roll Cancel (for Float Like a Butterfly or Death From Above)
+
+- 5. Clientside Hit Prediction + No Dodge Fallback Additions (e.g Astral Wind)
+   - Astral Wind (needs to keep blocking if parrying; else hold block lol)
+  
+- 6. Instead of first action, grab the last mutli-hit action for the timing information
+
+- 7. Per-Timing Block Hold Time With Global 0.3s
   
 Farming Fixes
 
@@ -85,8 +97,6 @@ Quality Of Life
     - Instant log ability
 
 - 10. PVP Safety
-  
-- 11. Auto Roll Cancel (for Float Like a Butterfly or Death From Above)
 
 - 12. No Roll Fatigue (slider for how much less roll fatigue you want)
   
@@ -121,8 +131,6 @@ Research
 
 - No Hallowing Enchant
   
-- Roll Parry, Roll M1, etc
-
 - NPC / Mob Notifier (Silhuett, Grudge, Ministry Heartspiller, Maljuror)
 
 - CTU Logging (v.s. logging, timezone & region logging)
