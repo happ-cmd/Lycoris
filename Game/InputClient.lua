@@ -321,6 +321,15 @@ end)
 ---@param skipRollCancel boolean
 ---@param rollCancelDelay number?
 InputClient.dodge = LPH_NO_VIRTUALIZE(function(skipRollCancel, rollCancelDelay)
+	local dodgeRemote = KeyHandling.getRemote("Dodge")
+	if not dodgeRemote then
+		return Logger.warn("Cannot dodge without dodge remote.")
+	end
+
+	if Configuration.expectToggleValue("BlatantRoll") then
+		return dodgeRemote:FireServer("Dodge", "roll", nil, nil, false, false)
+	end
+
 	local effectReplicator = replicatedStorage:FindFirstChild("EffectReplicator")
 	if not effectReplicator then
 		return Logger.warn("Cannot dodge without effect replicator.")
@@ -393,10 +402,9 @@ InputClient.dodge = LPH_NO_VIRTUALIZE(function(skipRollCancel, rollCancelDelay)
 	end
 
 	local unblockRemote = KeyHandling.getRemote("Unblock")
-	local dodgeRemote = KeyHandling.getRemote("Dodge")
 	local stopDodge = KeyHandling.getRemote("StopDodge")
 
-	if not unblockRemote or not dodgeRemote or not stopDodge then
+	if not unblockRemote or not stopDodge then
 		return
 	end
 
