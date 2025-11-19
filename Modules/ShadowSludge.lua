@@ -1,6 +1,18 @@
 ---@class Action
 local Action = getfenv().Action
 
+---@class Signal
+local Signal = getfenv().Signal
+
+---@class Maid
+local Maid = getfenv().Maid
+
+---@class TerrainListener
+local TerrainListener = getfenv().TerrainListener
+
+-- Listener object.
+local tlistener = TerrainListener.new("ShadowSludge")
+
 ---Module function.
 ---@param self EffectDefender
 ---@param timing EffectTiming
@@ -19,24 +31,26 @@ return function(self, timing)
 		return
 	end
 
-	---@type Attachment
-	local attachment = terrain:WaitForChild("REP_EMIT", 0.5)
-	if not attachment then
-		return
-	end
+	tlistener:connect(function(child)
+		if child.Name ~= "REP_EMIT" then
+			return
+		end
 
-	if not attachment:IsA("Attachment") then
-		return
-	end
+		if not child:IsA("Attachment") then
+			return
+		end
 
-	if (attachment.Position - humanoidRootPart.Position).Magnitude >= 10 then
-		return
-	end
+		task.wait(0.1)
 
-	local action = Action.new()
-	action._when = 0
-	action._type = "Dodge"
-	action.hitbox = Vector3.new(30, 30, 30)
-	action.name = "Dynamic Shadow Sludge Timing"
-	self:action(timing, action)
+		if (child.Position - humanoidRootPart.Position).Magnitude >= 5 then
+			return
+		end
+
+		local action = Action.new()
+		action._when = 0
+		action._type = "Dodge"
+		action.hitbox = Vector3.new(15, 15, 15)
+		action.name = "Dynamic Shadow Sludge Timing"
+		self:action(timing, action)
+	end)
 end
