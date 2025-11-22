@@ -49,6 +49,7 @@ return function(self, timing)
 
 			local actionTwo = Action.new()
 			actionTwo._type = "End Block"
+			action.name = "Rising Shadow End"
 			actionTwo._when = 500
 			actionTwo.ihbc = true
 			self:action(timing, actionTwo)
@@ -61,6 +62,7 @@ return function(self, timing)
 
 		local actionTwo = Action.new()
 		actionTwo._when = 500
+		actionTwo.name = "Rising Shadow End"
 		actionTwo._type = "End Block"
 		actionTwo.ihbc = true
 
@@ -71,6 +73,7 @@ return function(self, timing)
 		pt.name = "RisingShadowProjectile"
 		pt.hitbox = Vector3.new(22 + range, 22 + range, 22 + range)
 		pt.actions:push(action)
+		pt.actions:push(actionTwo)
 		pt.cbm = true
 
 		Defense.cdpo(tracker:wait(), pt)

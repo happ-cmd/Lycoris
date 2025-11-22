@@ -828,6 +828,22 @@ end
 ---Clean up all tasks.
 ---@param self Defender
 Defender.clean = LPH_NO_VIRTUALIZE(function(self)
+	-- Clean-up tasks.
+	for idx, task in next, self.tasks do
+		-- Cancel task.
+		task:cancel()
+
+		-- Clear in table.
+		self.tasks[idx] = nil
+
+		-- If we are cancelling a stop block, then we want to end the block.
+		if task.identifier ~= "End Block" then
+			continue
+		end
+
+		QueuedBlocking.stop("Defender_StartBlock")
+	end
+
 	-- Clean-up hooks.
 	self:clhook()
 

@@ -15,6 +15,10 @@ local function areCubesStillAlive(cubes)
 			continue
 		end
 
+		if cube.Transparency >= 0.5 then
+			continue
+		end
+
 		return true
 	end
 
@@ -46,7 +50,7 @@ return function(self, timing)
 		return self:action(timing, action)
 	end
 
-	task.wait(3.1 - Latency.rtt())
+	task.wait(2.0 - Latency.rtt())
 
 	if not hrp:FindFirstChild("REP_SOUND_13692212248") then
 		return
@@ -71,6 +75,16 @@ return function(self, timing)
 		cubes[#cubes + 1] = part
 	end
 
+	if #cubes <= 0 then
+		return
+	end
+
+	local fcube = cubes[1]
+
+	repeat
+		task.wait()
+	until fcube:FindFirstChild("BodyVelocity")
+
 	local blockStarted = false
 
 	timing.mat = 5000
@@ -91,7 +105,7 @@ return function(self, timing)
 				continue
 			end
 
-			if self:distance(cube) >= 15 then
+			if self:distance(cube) >= 12 then
 				continue
 			end
 

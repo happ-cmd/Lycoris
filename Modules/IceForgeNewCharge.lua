@@ -62,7 +62,7 @@ return function(self, timing)
 		pt.duih = true
 		pt.fhb = false
 		pt.name = "IceForgeProjectile"
-		pt.hitbox = Vector3.new(35, 35, 35)
+		pt.hitbox = Vector3.new(20, 20, 20)
 		pt.actions:push(action)
 		pt.cbm = true
 
