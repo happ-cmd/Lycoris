@@ -69,6 +69,9 @@ function ModuleManager.execute(lf, id, file, global)
 	-- Has to do with loadingPlaceholder issue. A very wide cyclic dependency where depdendencies rely on each other can break the bundler.
 	local Defense = require("Features/Combat/Defense")
 
+	---@module Game.Latency
+	local Latency = require("Game/Latency")
+
 	-- Set function environment to allow for internal modules.
 	getfenv(lf).Timing = Timing
 	getfenv(lf).PartTiming = PartTiming
@@ -85,6 +88,7 @@ function ModuleManager.execute(lf, id, file, global)
 	getfenv(lf).HitboxOptions = HitboxOptions
 	getfenv(lf).RepeatInfo = RepeatInfo
 	getfenv(lf).StateListener = StateListener
+	getfenv(lf).Latency = Latency
 
 	-- Load globals if we should.
 	for name, entry in next, (not global) and ModuleManager.globals or {} do

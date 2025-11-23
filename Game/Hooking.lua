@@ -66,19 +66,6 @@ local onInterceptedInput = LPH_NO_VIRTUALIZE(function(type)
 		return
 	end
 
-	if
-		Configuration.expectToggleValue("M1Rolling")
-		and type == INPUT_LEFT_CLICK
-		and not effectReplicatorModule:HasEffect("LightAttack")
-		and not effectReplicatorModule:HasEffect("CriticalAttack")
-		and not effectReplicatorModule:HasEffect("Followup")
-		and not effectReplicatorModule:HasEffect("Parried")
-		and os.clock() - lastTimestamp >= 0.5
-	then
-		lastTimestamp = os.clock()
-		InputClient.dodge(false, 0.02)
-	end
-
 	if not Configuration.expectToggleValue("AutoFlowState") then
 		return
 	end
@@ -709,8 +696,24 @@ end)
 ---On has effect.
 ---@return any
 local onHasEffect = LPH_NO_VIRTUALIZE(function(...)
+	if checkcaller() then
+		return oldHasEffect(...)
+	end
+
 	local args = { ... }
 	local class = args[2]
+
+	local attackEffects = {
+		"LightAttack",
+		"HeavyAttack",
+		"OffhandAttack",
+		"UsingAbility",
+		"CastingSpell",
+	}
+
+	if Configuration.expectToggleValue("NoAttackingClientChecks") and table.find(attackEffects, class) then
+		return false
+	end
 
 	if Configuration.expectToggleValue("NoFallDamage") and class == "NoFall" then
 		return true

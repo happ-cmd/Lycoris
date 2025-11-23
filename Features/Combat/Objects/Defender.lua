@@ -46,6 +46,9 @@ local StateListener = require("Features/Combat/StateListener")
 ---@module Utility.Finder
 local Finder = require("Utility/Finder")
 
+---@module Game.Latency
+local Latency = require("Game/Latency")
+
 ---@class Defender
 ---@field tasks Task[]
 ---@field tmaid Maid Cleaned up every clean cycle.
@@ -60,7 +63,6 @@ Defender.__index = Defender
 Defender.__type = "Defender"
 
 -- Services.
-local stats = game:GetService("Stats")
 local replicatedStorage = game:GetService("ReplicatedStorage")
 local userInputService = game:GetService("UserInputService")
 local players = game:GetService("Players")
@@ -99,7 +101,7 @@ end
 ---Fetch distance.
 ---@param from Model? | BasePart?
 ---@return number?
-function Defender:distance(from)
+Defender.distance = LPH_NO_VIRTUALIZE(function(_, from)
 	if not from then
 		return
 	end
@@ -125,7 +127,7 @@ function Defender:distance(from)
 	end
 
 	return (entRootPart.Position - localRootPart.Position).Magnitude
-end
+end)
 
 ---Find target - hookable function.
 ---@param self Defender
@@ -142,7 +144,7 @@ end)
 Defender.fsecs = LPH_NO_VIRTUALIZE(function(self, timing)
 	local player = players:GetPlayerFromCharacter(self.entity)
 	local sd = (player and player:GetAttribute("AveragePing") or 50.0) / 2000
-	return (timing.pfht or 0.15) + (sd + Defender.rdelay())
+	return (timing.pfht or 0.15) + (sd + Latency.rdelay())
 end)
 
 ---Start repeat until parry end.
@@ -154,6 +156,8 @@ Defender.srpue = LPH_NO_VIRTUALIZE(function(self, entity, timing, info)
 	if timing.umoa or timing.cbm then
 		timing["_rpd"] = PP_SCRAMBLE_RE_NUM(timing["_rpd"])
 		timing["_rsd"] = PP_SCRAMBLE_RE_NUM(timing["_rsd"])
+		timing["imdd"] = PP_SCRAMBLE_RE_NUM(timing["imdd"])
+		timing["imxd"] = PP_SCRAMBLE_RE_NUM(timing["imxd"])
 	end
 
 	local cache = {
@@ -164,9 +168,17 @@ Defender.srpue = LPH_NO_VIRTUALIZE(function(self, entity, timing, info)
 		["rpd"] = timing:rpd(),
 	}
 
+	local target = self:target(entity)
+	local options = HitboxOptions.new(target and target.root or CFrame.new(), timing)
+	options.spredict = not timing.duih
+	options.ptime = self:fsecs(timing)
+	options.entity = entity
+	options.hmid = info.hmid
+	options:ucache()
+
 	self:mark(Task.new(string.format("RPUE_%s_%i", timing.name, 0), function()
-		return cache["rsd"] - info.irdelay - self.sdelay()
-	end, timing.punishable, timing.after, self.rpue, self, entity, timing, info, cache))
+		return cache["rsd"] - info.irdelay - Latency.sdelay()
+	end, timing.punishable, timing.after, self.rpue, self, entity, timing, info, cache, options))
 
 	-- Notify.
 	if not LRM_UserNote or LRM_UserNote == "tester" then
@@ -176,14 +188,14 @@ Defender.srpue = LPH_NO_VIRTUALIZE(function(self, entity, timing, info)
 			cache["name"],
 			cache["rsd"],
 			cache["rpd"],
-			self.rtt()
+			Latency.rtt()
 		)
 	else
 		self:notify(
 			timing,
 			"Added RPUE '%s' ([redacted], then every [redacted]) with ping '%.2f' (changing) subtracted.",
 			cache["name"],
-			self.rtt()
+			Latency.rtt()
 		)
 	end
 end)
@@ -193,8 +205,9 @@ end)
 ---@param entity Model
 ---@param timing Timing
 ---@param info RepeatInfo
----@param cache table? Cache table for RPUE to prevent unnecessary recalculations.
-Defender.rpue = LPH_NO_VIRTUALIZE(function(self, entity, timing, info, cache)
+---@param cache table Cache table for RPUE to prevent unnecessary recalculations.
+---@param options HitboxOptions
+Defender.rpue = LPH_NO_VIRTUALIZE(function(self, entity, timing, info, cache, options)
 	local distance = self:distance(entity)
 	if not distance then
 		return Logger.warn("Stopping RPUE '%s' because the distance is not valid.", cache.name)
@@ -205,40 +218,39 @@ Defender.rpue = LPH_NO_VIRTUALIZE(function(self, entity, timing, info, cache)
 	end
 
 	local target = self:target(entity)
-
-	local options = HitboxOptions.new(target and target.root or CFrame.new(), timing)
-	options.spredict = not timing.duih
-	options.ptime = self:fsecs(timing)
-	options.entity = entity
-	options.hmid = info.hmid
-	options:ucache()
-
 	local success = false
+	local reasons = {}
+
+	options.part = target and target.root
+	options.cframe = not options.part and CFrame.new()
 
 	if timing.duih and target then
 		success = self:hc(options, info)
+		reasons[#reasons + 1] = string.format("hitbox (%s)", tostring(options:hitbox()))
 	end
 
-	if timing and (distance < cache.imdd or distance > cache.imxd) then
-		success = false
+	local within = (distance >= cache.imdd and distance <= cache.imxd)
+
+	if timing then
+		success = within
+	end
+
+	if not within then
+		reasons[#reasons + 1] = string.format("distance range (%.2f < %.2f > %.2f)", cache.imdd, distance, cache.imxd)
 	end
 
 	info.index = info.index + 1
 
 	self:mark(Task.new(string.format("RPUE_%s_%i", cache.name, info.index), function()
-		return cache["rpd"] - info.irdelay - self.sdelay()
-	end, timing.punishable, timing.after, self.rpue, self, entity, timing, info, cache))
+		return cache["rpd"] - info.irdelay - Latency.sdelay()
+	end, timing.punishable, timing.after, self.rpue, self, entity, timing, info, cache, options))
 
 	if not target then
 		return Logger.warn("Skipping RPUE '%s' because the target is not valid.", cache.name)
 	end
 
 	if not success then
-		return Logger.warn(
-			"Skipping RPUE '%s' because we are not in the %s.",
-			cache.name,
-			timing.duih and "hitbox" or "distance range"
-		)
+		return Logger.warn("Skipping RPUE '%s' (%s)", cache.name, #reasons > 1 and table.concat(reasons, ", ") or "N/A")
 	end
 
 	self:notify(timing, "Action type 'RPUE Parry' is being executed.")
@@ -304,12 +316,23 @@ Defender.valid = LPH_NO_VIRTUALIZE(function(self, options)
 		return internalNotifyFunction(timing, "No effect replicator module found.")
 	end
 
-	if not self.afeinted and not options.sstun and StateListener.astun() then
-		return internalNotifyFunction(timing, "User is in action (e.g swinging / critical / mantra) stun.")
-	end
+	local actionType = options.action and options.action._type or "N/A"
 
-	if effectReplicatorModule:FindEffect("Knocked") then
-		return internalNotifyFunction(timing, "User is knocked.")
+	if
+		not Configuration.expectToggleValue("BlatantRoll")
+		or (actionType ~= PP_SCRAMBLE_STR("Dodge") and actionType ~= PP_SCRAMBLE_STR("Forced Full Dodge"))
+	then
+		if not self.afeinted and not options.sstun and StateListener.astun() then
+			return internalNotifyFunction(timing, "User is in action stun.")
+		end
+
+		if effectReplicatorModule:FindEffect("Knocked") then
+			return internalNotifyFunction(timing, "User is knocked.")
+		end
+
+		if effectReplicatorModule:FindEffect("HitAnim") then
+			return internalNotifyFunction(timing, "User is in hit animation.")
+		end
 	end
 
 	if timing.tag == "M1" and selectedFilters["Filter Out M1s"] then
@@ -483,47 +506,6 @@ Defender.notify = LPH_NO_VIRTUALIZE(function(self, timing, str, ...)
 	Logger.notify("[%s] (%s) %s", PP_SCRAMBLE_STR(timing.name), self.__type, string.format(str, ...))
 end)
 
----@note: Perhaps one day, we can get better approximations for these.
---- These used to rely on GetNetworkPing which we assumed would be sending or atleast receiving delay.
---- That is incorrect, it is RakNet ping thereby being RTT.
-
----Get receiving delay.
----@return number
-function Defender.rdelay()
-	return math.max(Defender.rtt() / 2, 0.0)
-end
-
----Get sending delay.
----@return number
-function Defender.sdelay()
-	return math.max(Defender.rtt() / 2, 0.0)
-end
-
----Get data ping.
----@note: https://devforum.roblox.com/t/in-depth-information-about-robloxs-remoteevents-instance-replication-and-physics-replication-w-sources/1847340
----@note: The forum post above is misleading, not only is it the RTT time, please note that this also takes into account all delays like frame time.
----@note: This is our round-trip time (e.g double the ping) since we have a receiving delay (replication) and a sending delay when we send the input to the server.
----@todo: For every usage, the sending delay needs to be continously updated. The receiving one must be calculated once at initial send for AP ping compensation.
----@return number
-function Defender.rtt()
-	local network = stats:FindFirstChild("Network")
-	if not network then
-		return
-	end
-
-	local serverStatsItem = network:FindFirstChild("ServerStatsItem")
-	if not serverStatsItem then
-		return
-	end
-
-	local dataPingItem = serverStatsItem:FindFirstChild("Data Ping")
-	if not dataPingItem then
-		return
-	end
-
-	return (dataPingItem:GetValue() / 1000)
-end
-
 ---Repeat conditional.
 ---@param self Defender
 ---@param info RepeatInfo
@@ -606,7 +588,7 @@ Defender.hc = LPH_NO_VIRTUALIZE(function(self, options, info)
 	end
 
 	-- Run prediction check.
-	local closest = EntityHistory.pclosest(players.LocalPlayer, tick() - (self.sdelay() * PREDICTION_LENIENCY_MULTI))
+	local closest = EntityHistory.pclosest(players.LocalPlayer, tick() - (Latency.sdelay() * PREDICTION_LENIENCY_MULTI))
 	if not closest then
 		return false
 	end
@@ -634,6 +616,12 @@ end)
 ---@param action Action
 ---@param started number
 Defender.handle = LPH_NO_VIRTUALIZE(function(self, timing, action, started)
+	local actionType = PP_SCRAMBLE_STR(action._type)
+
+	if actionType == "End Block" then
+		QueuedBlocking.stop("Defender_StartBlock")
+	end
+
 	-- Handle auto feint. We want to feint before the parry action gets sent out.
 	-- We don't want to do this for any action that has:
 	-- 1. Delay until in hitbox because we don't know the actual timing
@@ -644,17 +632,18 @@ Defender.handle = LPH_NO_VIRTUALIZE(function(self, timing, action, started)
 		and not timing.duih
 		and action._when > 0
 		and self.__type == "Animation"
+		and actionType ~= "End Block"
 	then
 		self:afeint(timing, action, started)
 	end
 
-	if PP_SCRAMBLE_STR(action._type) ~= "End Block" then
+	if actionType ~= "End Block" then
 		if not self:valid(ValidationOptions.new(action, timing)) then
 			return
 		end
 	end
 
-	self:notify(timing, "Action type '%s' is being executed.", PP_SCRAMBLE_STR(action._type))
+	self:notify(timing, "Action type '%s' is being executed.", actionType)
 
 	local effectReplicator = replicatedStorage:FindFirstChild("EffectReplicator")
 	if not effectReplicator then
@@ -666,23 +655,23 @@ Defender.handle = LPH_NO_VIRTUALIZE(function(self, timing, action, started)
 		return
 	end
 
-	if PP_SCRAMBLE_STR(action._type) == "Start Block" then
-		return QueuedBlocking.invoke(QueuedBlocking.BLOCK_TYPE_NORMAL, "Defender_StartBlock", nil)
+	if actionType == "Start Block" then
+		return QueuedBlocking.invoke(QueuedBlocking.BLOCK_TYPE_NORMAL, "Defender_StartBlock", 20.0)
 	end
 
-	if PP_SCRAMBLE_STR(action._type) == "End Block" then
-		return QueuedBlocking.stop("Defender_StartBlock")
-	end
-
-	if PP_SCRAMBLE_STR(action._type) == "Dodge" then
+	if actionType == "Dodge" then
 		return InputClient.dodge(false)
 	end
 
-	if PP_SCRAMBLE_STR(action._type) == "Forced Full Dodge" then
+	if actionType == "Forced Full Dodge" then
 		return InputClient.dodge(true)
 	end
 
-	if PP_SCRAMBLE_STR(action._type) == "Jump" then
+	if actionType == "End Block" then
+		return
+	end
+
+	if actionType == "Jump" then
 		local humanController = InputClient.getHumanController()
 		if not humanController then
 			return
@@ -691,7 +680,7 @@ Defender.handle = LPH_NO_VIRTUALIZE(function(self, timing, action, started)
 		return humanController:Jump()
 	end
 
-	if PP_SCRAMBLE_STR(action._type) == "Teleport Up" then
+	if actionType == "Teleport Up" then
 		local character = players.LocalPlayer.Character
 		if not character then
 			return
@@ -756,8 +745,14 @@ Defender.parry = LPH_NO_VIRTUALIZE(function(self, timing, action)
 	end
 
 	-- What fallbacks can we run?
-	local canBlock = Configuration.expectToggleValue("DeflectBlockFallback")
-	local canVent = StateListener.cvent() and Configuration.expectToggleValue("VentFallback") and not timing.nvfb
+	local canBlock = Configuration.expectToggleValue("DeflectBlockFallback") and not timing.nbfb
+
+	local canVent = StateListener.cvent()
+		and Configuration.expectToggleValue("VentFallback")
+		and not timing.nvfb
+		and not timing.rpue
+		and self.__type ~= "Part"
+
 	local canDodge = StateListener.cdodge()
 		and Configuration.expectToggleValue("RollOnParryCooldown")
 		and not timing.ndfb
@@ -770,20 +765,20 @@ Defender.parry = LPH_NO_VIRTUALIZE(function(self, timing, action)
 		return internalNotify(timing, "Action type 'Parry' fallback to 'Dodge' type.")
 	end
 
-	if canBlock then
-		-- Block.
-		QueuedBlocking.invoke(QueuedBlocking.BLOCK_TYPE_NORMAL, "Defender_BlockFallback", timing.bfht)
-
-		-- Notify.
-		return internalNotify(timing, "Action type 'Parry' fallback to 'Block' type.")
-	end
-
 	if canVent then
 		-- Vent.
 		InputClient.vent()
 
 		-- Notify.
 		return internalNotify(timing, "Action type 'Parry' fallback to 'Vent' type.")
+	end
+
+	if canBlock then
+		-- Block.
+		QueuedBlocking.invoke(QueuedBlocking.BLOCK_TYPE_NORMAL, "Defender_BlockFallback", timing.bfht)
+
+		-- Notify.
+		return internalNotify(timing, "Action type 'Parry' fallback to 'Block' type.")
 	end
 
 	-- Cannot fallback.
@@ -833,6 +828,22 @@ end
 ---Clean up all tasks.
 ---@param self Defender
 Defender.clean = LPH_NO_VIRTUALIZE(function(self)
+	-- Clean-up tasks.
+	for idx, task in next, self.tasks do
+		-- Cancel task.
+		task:cancel()
+
+		-- Clear in table.
+		self.tasks[idx] = nil
+
+		-- If we are cancelling a stop block, then we want to end the block.
+		if task.identifier ~= "End Block" then
+			continue
+		end
+
+		QueuedBlocking.stop("Defender_StartBlock")
+	end
+
 	-- Clean-up hooks.
 	self:clhook()
 
@@ -897,7 +908,7 @@ Defender.afeint = LPH_NO_VIRTUALIZE(function(self, timing, action, started)
 	-- If not, then we did our goal, and prevented the user from getting hit.
 
 	-- Time until our animation ends.
-	local animTimeLeft = (lfaction:when() - (os.clock() - latimestamp)) + self.rtt()
+	local animTimeLeft = (lfaction:when() - (os.clock() - latimestamp)) + Latency.rtt()
 
 	-- Time until the enemy's action hits us.
 	local enemyTimeLeft = action:when() - (os.clock() - started)
@@ -950,11 +961,11 @@ Defender.action = LPH_NO_VIRTUALIZE(function(self, timing, action)
 	end
 
 	-- Get initial receive delay.
-	local rdelay = self.rdelay()
+	local rdelay = Latency.rdelay()
 
 	-- Add action.
 	self:mark(Task.new(PP_SCRAMBLE_STR(action._type), function()
-		return action:when() - rdelay - self.sdelay()
+		return action:when() - rdelay - Latency.sdelay()
 	end, timing.punishable, timing.after, self.handle, self, timing, action, os.clock()))
 
 	-- Log.
@@ -964,14 +975,14 @@ Defender.action = LPH_NO_VIRTUALIZE(function(self, timing, action)
 			"Added action '%s' (%.2fs) with ping '%.2f' (changing) subtracted.",
 			PP_SCRAMBLE_STR(action.name),
 			action:when(),
-			self.rtt()
+			Latency.rtt()
 		)
 	else
 		self:notify(
 			timing,
 			"Added action '%s' ([redacted]) with ping '%.2f' (changing) subtracted.",
 			PP_SCRAMBLE_STR(action.name),
-			self.rtt()
+			Latency.rtt()
 		)
 	end
 end)

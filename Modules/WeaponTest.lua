@@ -23,8 +23,8 @@ return function(self, timing)
 
 	timing.pfh = true
 	timing.phd = true
-	timing.pfht = 0.3
-	timing.phds = 0.2
+	timing.pfht = 0.4
+	timing.phds = 1.0
 
 	local windup = nil
 	local ispeed = self.track.Speed
@@ -86,7 +86,7 @@ return function(self, timing)
 	elseif data.type == "Dagger" then
 		windup = (0.150 / self.track.Speed) + 0.075
 	elseif data.type == "Sword" then
-		windup = (0.150 / self.track.Speed) + 0.075
+		windup = (0.150 / self.track.Speed) + 0.100
 	end
 
 	if not windup then
@@ -103,8 +103,8 @@ return function(self, timing)
 		action.hitbox = Vector3.new(data.length * 1.7, data.length * 3, data.length * 1.8)
 	end
 
-	if data.type == "Sword" then
-		action.hitbox = Vector3.new(data.length * 2.0, data.length * 3, data.length * 2.1)
+	if data.type == "Sword" or data.type == "Twinblade" then
+		action.hitbox = Vector3.new(data.length * 2.0, data.length * 3, data.length * 1.9)
 	end
 
 	if

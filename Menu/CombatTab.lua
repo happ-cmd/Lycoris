@@ -153,14 +153,22 @@ function CombatTab.initAutoDefenseSection(groupbox)
 	autoDefenseDepBox:AddToggle("VentFallback", {
 		Text = "Vent Fallback",
 		Default = false,
-		Tooltip = "This is used as a last resort. If 'Deflect Block Fallback' is on, it will wait for shaky block.",
+		Tooltip = "This is used as a last resort which takes priority after 'Deflect Block Fallback' if it is on.",
 	})
 
 	autoDefenseDepBox:AddToggle("DeflectBlockFallback", {
 		Text = "Deflect Block Fallback",
 		Default = false,
-		Tooltip = "If enabled, the auto defense will fallback to block frames if parry action and/or fallback is not available.",
+		Tooltip = "If enabled, the auto defense will fallback to block frames if parry action and/or fallback is not available as a last resort.",
 	})
+
+	local blatantRollToggle = autoDefenseDepBox:AddToggle("BlatantRoll", {
+		Text = "Blatant Roll",
+		Default = false,
+		Tooltip = "If enabled, we will call the roll remotes directly without running any checks, specific-movement, etc.",
+	})
+
+	local rollCancelTgDepBox = autoDefenseDepBox:AddDependencyBox()
 
 	local rollCancelToggle = autoDefenseDepBox:AddToggle("RollCancel", {
 		Text = "Roll Cancel",
@@ -180,6 +188,10 @@ function CombatTab.initAutoDefenseSection(groupbox)
 
 	rollCancelDepBox:SetupDependencies({
 		{ rollCancelToggle, true },
+	})
+
+	rollCancelTgDepBox:SetupDependencies({
+		{ blatantRollToggle, true },
 	})
 
 	local afToggle = autoDefenseDepBox:AddToggle("AllowFailure", {

@@ -10,28 +10,34 @@ local Action = getfenv().Action
 ---@module Features.Combat.Defense
 local Defense = getfenv().Defense
 
+---@module Game.Latency
+local Latency = getfenv().Latency
+
+-- Create listener for Smouldering Hallow projectiles
 local plistener = ProjectileListener.new("SmoulderingCrit")
 
 ---Module function.
 ---@param self AnimatorDefender
 ---@param timing AnimationTiming
 return function(self, timing)
+	if self:distance(self.entity) <= 20 then
+		local action = Action.new()
+		action._type = "Start Block"
+		action._when = 700
+		action.name = "Smouldering Crit Start Timing"
+		action.hitbox = Vector3.new(18, 18, 25)
+		self:action(timing, action)
+
+		local endAction = Action.new()
+		endAction._type = "End Block"
+		endAction._when = 2500
+		endAction.name = "Smouldering Crit End Timing"
+		return self:action(timing, endAction)
+	end
+
 	plistener:connect(function(child)
 		if not child.Name:match("PumpkinProjectile") then
 			return
-		end
-
-		task.wait(0.01 - self.rtt())
-
-		if self:distance(self.entity) <= 0 then
-			local action = Action.new()
-			action._type = "Dodge"
-			action._when = 0
-			action.name = "Smouldering Crit Close Timing"
-			action.hitbox = Vector3.new(18, 18, 25)
-			action.fhb = true
-			action.ihbc = false
-			return self:action(timing, action)
 		end
 
 		local action = Action.new()

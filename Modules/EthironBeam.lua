@@ -4,6 +4,9 @@ local Action = getfenv().Action
 ---@module Features.Combat.Objects.RepeatInfo
 local RepeatInfo = getfenv().RepeatInfo
 
+---@module Game.Latency
+local Latency = getfenv().Latency
+
 ---Module function.
 ---@param self AnimatorDefender
 ---@param timing AnimationTiming
@@ -20,7 +23,7 @@ return function(self, timing)
 
 	-- Beam.
 	if rarm3:WaitForChild("Attach", 0.1) then
-		local info = RepeatInfo.new(timing, self.rdelay(), self:uid(10))
+		local info = RepeatInfo.new(timing, Latency.rdelay(), self:uid(10))
 		info.track = self.track
 
 		timing.mat = 3000
@@ -28,11 +31,13 @@ return function(self, timing)
 		timing.ieae = true
 		timing.iae = true
 		timing.rpue = true
-		timing.imxd = 600
+		timing.duih = false
+		timing.imdd = 0
+		timing.imxd = 1000
 		timing._rsd = 800
 		timing._rpd = 150
-		timing.hitbox = Vector3.new(800, 800, 800)
 		return self:srpue(self.entity, timing, info)
+
 	-- Blinding move
 	else
 		local action = Action.new()
