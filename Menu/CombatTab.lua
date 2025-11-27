@@ -315,6 +315,12 @@ function CombatTab.initCombatAssistance(groupbox)
 		Tooltip = "Detect what Silentheart moves would be thrown out and use flow-state beforehand.",
 	})
 
+	groupbox:AddToggle("DelayedFeints", {
+		Text = "Delayed Feints",
+		Default = false,
+		Tooltip = "When you feint during a move, it will attempt to delay it to be as late as possible.",
+	})
+
 	local ascToggle = groupbox:AddToggle("AnimationSpeedChanger", {
 		Text = "Animation Speed Changer",
 		Default = false,
@@ -342,6 +348,49 @@ function CombatTab.initCombatAssistance(groupbox)
 		{ ascToggle, true },
 	})
 
+	local arToggle = groupbox:AddToggle("ActionRolling", {
+		Text = "Action Rolling",
+		Default = false,
+		Tooltip = "Automatically roll when performing certain actions.",
+	})
+
+	local arDepBox = groupbox:AddDependencyBox()
+
+	arDepBox:AddDropdown("ActionRollingActions", {
+		Text = "Action Rolling Actions",
+		Values = {
+			"Roll On M1",
+			"Roll On Critical",
+			"Roll On Cast",
+			"Roll On Parry",
+		},
+		Multi = true,
+		AllowNull = true,
+		Default = {},
+	})
+
+	arDepBox:AddSlider("ActionRollCancelDelay", {
+		Text = "Action Roll Cancel Delay",
+		Default = 0.1,
+		Min = 0,
+		Max = 2,
+		Suffix = "s",
+		Rounding = 2,
+	})
+
+	arDepBox:AddSlider("ActionRollCooldown", {
+		Text = "Action Roll Cooldown",
+		Default = 2,
+		Min = 0,
+		Max = 5,
+		Suffix = "s",
+		Rounding = 2,
+	})
+
+	arDepBox:SetupDependencies({
+		{ arToggle, true },
+	})
+
 	groupbox:AddToggle("M1Hold", {
 		Text = "M1 Hold",
 		Default = false,
@@ -357,12 +406,6 @@ function CombatTab.initCombatAssistance(groupbox)
 		Text = "Feint Flourish",
 		Default = false,
 		Tooltip = "Allow yourself to feint your flourish attacks. You need a mantra.",
-	})
-
-	groupbox:AddToggle("ExtendRollCancelFrames", {
-		Text = "Extend Roll Cancel Frames",
-		Default = false,
-		Tooltip = "Extends the roll cancel frames to give you more dodge leniency.",
 	})
 end
 

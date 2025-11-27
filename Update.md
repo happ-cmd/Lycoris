@@ -1,25 +1,35 @@
 # Deepwoken Rewrite
-**Module diff vs. previous snapshot: +0/-0/~3 (added/removed/changed)**
+**Module diff vs. previous snapshot: +0/-3/~7 (added/removed/changed)**
 ```diff
-+ (changed) RisingShadow
-+ (changed) IceForgeCast
-+ (changed) IceForgeNewCharge
+- (removed) SilentheartHeavyRelentless
+- (removed) SilentheartLightRelentless
+- (removed) SilentheartMediumRelentless
++ (changed) CrescentCrit
++ (changed) SilentheartMediumMayhem
++ (changed) KatanaCritical
++ (changed) Scythe
++ (changed) SilentheartLightMayhem
++ (changed) EtherBarrage
++ (changed) Eruption
 ```
 
-**Timing diff vs. previous snapshot: +0/-0/~7 (animation: +0/-0/~7)**
+**Timing diff vs. previous snapshot: +2/-4/~1 (animation: +0/-3/~1, part: +0/-1/~0, effect: +2/-0/~0)**
 ```diff
-+ (changed) Animation : PromDraw (by Blastbrean)
-+ (changed) Animation : IceLance (by Blastbrean)
-+ (changed) Animation : RisingFrost (by Blastbrean)
-+ (changed) Animation : CloseShave (by Blastbrean)
-+ (changed) Animation : PrecisionCuts (by Blastbrean)
-+ (changed) Animation : ShoulderBashWindup (by Blastbrean)
-+ (changed) Animation : ShoulderBashGo (by Blastbrean)
++ (changed) Animation : Heartwing (by Blastbrean)
+- (removed) Animation : SilentheartMediumRelentless (by Blastbrean)
+- (removed) Animation : SilentheartHeavyRelentless (by Blastbrean)
+- (removed) Animation : SlientheartLightRelentless (by Blastbrean)
+- (removed) Part : MalStrike1 (by Blastbrean)
++ (added) Effect : ManiWindup (by Blastbrean)
++ (added) Effect : SilentheartWarn (by Blastbrean)
 ```
+*Silentheart should be fully fixed in this update. All variants, all types, flow state or not.*
+*The only thing I am concerned about is the Mani Katti. If it misses the initial parry, it will eat the entire combo.*
 
 **New features?**
 ```diff
-- (bug fix) A uncatched bug during code changes caused old AP tasks to not be cancelled when new ones were created
+- (bug fix) Micro-profiling is now disabled when silent mode is on
++ (added) Delayed feinting
 ```
 
-*Your commit ID should be "d75b3b" when the update is pushed to you.*
+*Your commit ID should be "897de9" when the update is pushed to you.*

@@ -4,8 +4,8 @@ local Action = getfenv().Action
 ---@module Modules.Globals.Mantra
 local Mantra = getfenv().Mantra
 
----@module Features.Combat.Objects.RepeatInfo
-local RepeatInfo = getfenv().RepeatInfo
+---@class Signal
+local Signal = getfenv().Signal
 
 ---Module function.
 ---@param self AnimatorDefender
@@ -18,17 +18,30 @@ return function(self, timing)
 	timing.pfh = true
 	timing.fhb = true
 	timing.rpue = false
+	timing.duih = true
+	timing.hitbox = Vector3.new(20 + range, 20 + range, 20 + range)
 
 	local action = Action.new()
 	action._when = 400
 	action._type = "Start Block"
-	action.hitbox = Vector3.new(18 + range, 15 + range, 15 + range)
 	action.name = "Wind Carve Start"
 	self:action(timing, action)
 
-	local actionEnd = Action.new()
-	actionEnd._when = 1500
-	actionEnd._type = "End Block"
-	actionEnd.name = "Wind Carve End"
-	return self:action(timing, actionEnd)
+	local hrp = self.entity:FindFirstChild("HumanoidRootPart")
+	if not hrp then
+		return
+	end
+
+	local onDescendantAdded = Signal.new(self.entity.DescendantAdded)
+
+	self.tmaid:add(onDescendantAdded:connect("WindCarve_StopCarve", function(child)
+		if child.Name == "StopCarve" then
+			local actionTwo = Action.new()
+			actionTwo._when = 0
+			actionTwo._type = "End Block"
+			actionTwo.ihbc = true
+			actionTwo.name = "Wind Carve End"
+			self:action(timing, actionTwo)
+		end
+	end))
 end
