@@ -483,8 +483,16 @@ Defender.initial = LPH_NO_VIRTUALIZE(function(self, from, pair, name, key)
 	end
 
 	-- Check for distance; if we have a timing.
-	if timing and (distance < PP_SCRAMBLE_NUM(timing.imdd) or distance > PP_SCRAMBLE_NUM(timing.imxd)) then
-		return nil
+	if timing then
+		local md = PP_SCRAMBLE_NUM(timing.imdd)
+
+		if md <= 0.01 then
+			md = 0.0
+		end
+
+		if distance < md or distance > PP_SCRAMBLE_NUM(timing.imxd) then
+			return nil
+		end
 	end
 
 	-- Check for no timing. If so, let's log a miss.

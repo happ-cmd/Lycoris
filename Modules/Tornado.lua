@@ -22,8 +22,9 @@ return function(self, timing)
 		end
 	end
 
-	timing.duih = true
-	timing.hitbox = Vector3.new(20, 20, 20)
+	repeat
+		task.wait()
+	until not self.part.Parent or self:distance(self.part) < 20
 
 	local firstAction = Action.new()
 	firstAction._when = 100
