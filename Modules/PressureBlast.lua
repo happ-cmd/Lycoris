@@ -16,6 +16,10 @@ return function(self, timing)
 	local action = Action.new()
 	action._when = 500
 
+	if distance >= 8 then
+		action._when = 550
+	end
+
 	if distance > 18 then
 		action._when = 650
 	end

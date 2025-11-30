@@ -155,7 +155,7 @@ return function(self, timing)
 	end
 
 	if data.type == "Sword" or data.type == "Twinblade" then
-		action.hitbox = Vector3.new(data.length * 1.5, data.length * 3, data.length * 1.7)
+		action.hitbox = Vector3.new(data.length * 1.7, data.length * 3, data.length * 1.8)
 	end
 
 	if
@@ -164,7 +164,7 @@ return function(self, timing)
 		or data.type == "Greatsword"
 		or data.type == "Greataxe"
 	then
-		action.hitbox = Vector3.new(data.length * 1.6, data.length * 2, data.length * 1.8)
+		action.hitbox = Vector3.new(data.length * 2.2, data.length * 2, data.length * 1.8)
 	end
 
 	if data.type == "Fist" or data.type == "Dagger" then
