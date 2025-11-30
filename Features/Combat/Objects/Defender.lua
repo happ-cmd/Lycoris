@@ -924,7 +924,7 @@ end)
 ---@param timing Timing
 ---@param action Action
 ---@param started number Timestamp of when the auto feint task started.
----@param intiial boolean Whether this is the initial auto feint check.
+---@param initial boolean Whether this is the initial auto feint check.
 Defender.afeint = LPH_NO_VIRTUALIZE(function(self, timing, action, started, initial)
 	local function innerNotify(...)
 		if initial then
