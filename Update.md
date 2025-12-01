@@ -115,4 +115,4 @@ It attempts to parry instead of block with some added information in the notific
 ```
 *Info spoofing does not prevent you from hovering over the spectate list. If you do so, it will show real usernames.*
 
-*Your commit ID should == "asdasdasd" when the update is fully pushed to you.*
+*Your commit ID should == "d47a28" when the update is fully pushed to you.*
