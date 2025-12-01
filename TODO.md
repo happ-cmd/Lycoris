@@ -72,9 +72,7 @@ Farming Fixes
 
 Gank Fixes
 
-- 5. Ignore Allies Rework
-
-- 6. Easier Whitelist / Blaclist
+- 5. Ignore Allies Use ReputationSystem
 
 Quality Of Life
 
