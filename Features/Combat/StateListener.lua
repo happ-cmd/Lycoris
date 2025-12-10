@@ -1,5 +1,6 @@
 -- StateListener module. Practically, it is a module to store data / information about what is happening with the character.
 local StateListener = {
+	-- Local data.
 	lMantraActivated = nil,
 	lAnimTiming = nil,
 	lAnimFaction = nil,
@@ -7,6 +8,11 @@ local StateListener = {
 	chainStacks = nil,
 	lastVent = nil,
 	lAnimLatency = nil,
+
+	-- Global data provided for by every AnimationDefender object.
+	-- This is the most recent information from every defender which this gets set for.
+	lADAction = nil,
+	lADAnimation = nil,
 }
 
 ---@module Utility.Signal

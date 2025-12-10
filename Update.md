@@ -7,7 +7,11 @@
 **Any new features?**
 ```diff
 - (bug fix) Manually managed notifications now use the scaled notification size
+- (bug fix) Info spoofing has now perfect removal with no gaps (this would always activate on injection)
+- (bug fix) Info spoofing now does not set some manual text settings when it is turned off (preventing it from showing on injection)
 - (bug fix) When disabled per-timing player prediction was on, it would force itself on for other-prediction-based stuff.
+- (bug fix) Made the dynamic bounding box search for body parts more strictly
+- (bug fix) Dynamic bounding box now invalidates the cache when the detected size has increased by a large amount
 + (changed) Timing probabilities list is now alphabetically sorted
 + (changed) Auto parry now respects AP frames (please report any issues with this, I remember some on Legacy; it should say it detected AP frames in notifications)
 + (added) Auto mantra followup

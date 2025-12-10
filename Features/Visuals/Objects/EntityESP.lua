@@ -58,7 +58,7 @@ EntityESP.utext = LPH_NO_VIRTUALIZE(function(self, container, text)
 	end
 
 	textLabel.Text = text
-	textLabel.TextSize = Configuration.expectOptionValue("FontSize")
+	textLabel.TextSize = Configuration.expectOptionValue("FontSize") or 13
 	textLabel.Font = Enum.Font[Configuration.expectOptionValue("Font") or "Code"] or Enum.Font.Code
 	textLabel.TextColor3 = Configuration.idOptionValue(self.identifier, "Color") or Color3.new(1, 1, 1)
 end)
@@ -425,17 +425,18 @@ EntityESP.update = LPH_NO_VIRTUALIZE(function(self, tags)
 	hbar.Visible = Configuration.idToggleValue(identifier, "HealthBar")
 
 	-- Update element information.
+	local fontSize = Configuration.expectOptionValue("FontSize") or 13
 	local text, lines = self:btext(self.label, tags)
 	self:utext(ncontainer, text)
 
 	local name = self:find("Name")
 	if name then
-		name.space = (lines * Configuration.expectOptionValue("FontSize")) + (ELEMENT_PADDING * 2)
+		name.space = (lines * fontSize) + (ELEMENT_PADDING * 2)
 	end
 
 	local delement = self:find("Distance")
 	if delement then
-		delement.space = Configuration.expectOptionValue("FontSize") + (ELEMENT_PADDING * 2)
+		delement.space = fontSize + (ELEMENT_PADDING * 2)
 	end
 
 	if dcontainer then
@@ -497,6 +498,15 @@ EntityESP.build = LPH_NO_VIRTUALIZE(function(self)
 	local maxVerticalPadding = math.max(sideOffsets.top, sideOffsets.bottom)
 
 	-- Scale the BillboardGUI accordingly.
+	local extentsSize = self.entity:GetExtentsSize()
+
+	self.lextents = extentsSize
+
+	-- Invalidate cached size if the size has changed significantly.
+	if math.abs(self.lextents.Magnitude - extentsSize.Magnitude) >= 3.0 then
+		self.sextents = nil
+	end
+
 	if not self.sextents then
 		local fmodel = self.entity:Clone()
 
@@ -506,6 +516,10 @@ EntityESP.build = LPH_NO_VIRTUALIZE(function(self)
 			end
 
 			if inst:IsA("BasePart") and not inst.Parent:IsA("BasePart") then
+				continue
+			end
+
+			if not inst:FindFirstChildWhichIsA("Weld") and not inst:FindFirstChildWhichIsA("Motor6D") then
 				continue
 			end
 
