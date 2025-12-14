@@ -91,10 +91,6 @@ HitboxOptions.extrapolate = LPH_NO_VIRTUALIZE(function(self)
 		return error("HitboxOptions.extrapolate - unimplemented for CFrame")
 	end
 
-	if not self.entity then
-		return error("HitboxOptions.extrapolate - no entity specified")
-	end
-
 	if not self.ptime then
 		return error("HitboxOptions.extrapolate - no predicted time specified")
 	end

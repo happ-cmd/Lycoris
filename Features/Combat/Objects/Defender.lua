@@ -16,9 +16,6 @@ local QueuedBlocking = require("Game/QueuedBlocking")
 ---@module Utility.Maid
 local Maid = require("Utility/Maid")
 
----@module GUI.Library
-local Library = require("GUI/Library")
-
 ---@module Game.Timings.ModuleManager
 local ModuleManager = require("Game/Timings/ModuleManager")
 
@@ -156,10 +153,10 @@ end)
 
 ---Start repeat until parry end.
 ---@param self Defender
----@param entity Model
+---@param ref Model|Part
 ---@param timing Timing
 ---@param info RepeatInfo
-Defender.srpue = LPH_NO_VIRTUALIZE(function(self, entity, timing, info)
+Defender.srpue = LPH_NO_VIRTUALIZE(function(self, ref, timing, info)
 	if timing.umoa or timing.cbm then
 		timing["_rpd"] = PP_SCRAMBLE_RE_NUM(timing["_rpd"])
 		timing["_rsd"] = PP_SCRAMBLE_RE_NUM(timing["_rsd"])
@@ -175,18 +172,24 @@ Defender.srpue = LPH_NO_VIRTUALIZE(function(self, entity, timing, info)
 		["rpd"] = timing:rpd(),
 	}
 
-	local target = self:target(entity)
-	local options = HitboxOptions.new(target and target.root or CFrame.new(), timing)
+	local target = self:target(ref)
+	local part = target and target.root or CFrame.new()
+
+	if ref:IsA("Part") then
+		part = ref
+	end
+
+	local options = HitboxOptions.new(part, timing)
 	options.spredict = not timing.duih
 	options.ptime = self:fsecs(timing)
-	options.entity = entity
+	options.entity = ref:IsA("Model") and target or nil
 	options.hmid = info.hmid
 	options:ucache()
 
 	-- Start RPUE.
 	self:mark(Task.new(string.format("RPUE_%s_%i", timing.name, 0), function()
 		return cache["rsd"] - info.irdelay - Latency.sdelay()
-	end, timing.punishable, timing.after, self.rpue, self, entity, timing, info, cache, options))
+	end, timing.punishable, timing.after, self.rpue, self, ref, timing, info, cache, options))
 
 	-- Notify.
 	if not LRM_UserNote or LRM_UserNote == "tester" then
@@ -210,13 +213,13 @@ end)
 
 ---Repeat until parry end.
 ---@param self Defender
----@param entity Model
+---@param ref Model|Part
 ---@param timing Timing
 ---@param info RepeatInfo
 ---@param cache table Cache table for RPUE to prevent unnecessary recalculations.
 ---@param options HitboxOptions
-Defender.rpue = LPH_NO_VIRTUALIZE(function(self, entity, timing, info, cache, options)
-	local distance = self:distance(entity)
+Defender.rpue = LPH_NO_VIRTUALIZE(function(self, ref, timing, info, cache, options)
+	local distance = self:distance(ref)
 	if not distance then
 		return Logger.warn("Stopping RPUE '%s' because the distance is not valid.", cache.name)
 	end
@@ -225,11 +228,11 @@ Defender.rpue = LPH_NO_VIRTUALIZE(function(self, entity, timing, info, cache, op
 		return Logger.warn("Stopping RPUE '%s' because the repeat condition is not valid.", cache.name)
 	end
 
-	local target = self:target(entity)
+	local target = ref:IsA("Model") and self:target(ref) or true
 	local success = false
 	local reasons = {}
 
-	options.part = target and target.root
+	options.part = ref:IsA("Part") and ref or (target and target.root)
 	options.cframe = not options.part and CFrame.new()
 
 	if timing.duih and target then
@@ -251,7 +254,7 @@ Defender.rpue = LPH_NO_VIRTUALIZE(function(self, entity, timing, info, cache, op
 
 	self:mark(Task.new(string.format("RPUE_%s_%i", timing.name, info.index), function()
 		return cache.rpd - info.irdelay - Latency.sdelay()
-	end, timing.punishable, timing.after, self.rpue, self, entity, timing, info, cache, options))
+	end, timing.punishable, timing.after, self.rpue, self, ref, timing, info, cache, options))
 
 	if not target then
 		return Logger.warn("Skipping RPUE '%s' because the target is not valid.", cache.name)

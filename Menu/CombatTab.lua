@@ -650,6 +650,30 @@ function CombatTab.initCombatAssistance(groupbox)
 	})
 end
 
+---Initialize debugging section.
+---@param groupbox table
+function CombatTab.initDebuggingSection(groupbox)
+	groupbox:AddToggle("BlockParryState", {
+		Text = "Block Parry State",
+		Default = false,
+	})
+
+	groupbox:AddToggle("BlockDodgeState", {
+		Text = "Block Dodge State",
+		Default = false,
+	})
+
+	groupbox:AddToggle("BlockVentState", {
+		Text = "Block Vent State",
+		Default = false,
+	})
+
+	groupbox:AddToggle("NoBlockingState", {
+		Text = "No Blocking State",
+		Default = false,
+	})
+end
+
 ---Initialize tab.
 ---@param window table
 function CombatTab.init(window)
@@ -658,7 +682,6 @@ function CombatTab.init(window)
 
 	-- Initialize sections.
 	CombatTab.initAutoDefenseSection(tab:AddDynamicGroupbox("Auto Defense"))
-
 	-- Create targeting section tab box.
 	local tabbox = tab:AddDynamicTabbox()
 	CombatTab.initCombatTargetingSection(tabbox:AddTab("Targeting"))
@@ -672,6 +695,11 @@ function CombatTab.init(window)
 	local tpTabbox = tab:AddDynamicTabbox()
 	CombatTab:initTimingsSection(tpTabbox:AddTab("Timings"))
 	CombatTab:initProbabilitiesSection(tpTabbox:AddTab("Probabilities"))
+
+	-- Initialize debugging section.
+	if not LRM_UserNote then
+		CombatTab.initDebuggingSection(tab:AddDynamicGroupbox("Debugging"))
+	end
 end
 
 -- Return CombatTab module.

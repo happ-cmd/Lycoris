@@ -273,6 +273,10 @@ StateListener.cvent = LPH_NO_VIRTUALIZE(function()
 	local effectReplicatorModule = require(effectReplicator)
 	local ventCooldownEffect = effectReplicatorModule:FindEffect("NoBurst")
 
+	if Configuration.expectToggleValue("BlockVentState") then
+		return false
+	end
+
 	local character = players.LocalPlayer and players.LocalPlayer.Character
 	if not character then
 		return false
@@ -309,6 +313,10 @@ StateListener.cparry = LPH_NO_VIRTUALIZE(function()
 	local effectReplicatorModule = require(effectReplicator)
 	local parryCooldownEffect = effectReplicatorModule:FindEffect("ParryCool")
 
+	if Configuration.expectToggleValue("BlockParryState") then
+		return false
+	end
+
 	if not effectReplicatorModule:FindEffect("Equipped") then
 		return false
 	end
@@ -342,6 +350,10 @@ StateListener.cblock = LPH_NO_VIRTUALIZE(function()
 		return false
 	end
 
+	if Configuration.expectToggleValue("NoBlockingState") then
+		return false
+	end
+
 	local breakMeter = character:FindFirstChild("BreakMeter")
 	if not breakMeter then
 		return false
@@ -372,6 +384,10 @@ StateListener.cdodge = LPH_NO_VIRTUALIZE(function()
 	local effectReplicatorModule = require(effectReplicator)
 	local dodgeCooldownEffect = effectReplicatorModule:FindEffect("NoRoll")
 	local stunCooldownEffect = effectReplicatorModule:FindEffect("Stun")
+
+	if Configuration.expectToggleValue("BlockDodgeState") then
+		return false
+	end
 
 	if dodgeCooldownEffect then
 		return false

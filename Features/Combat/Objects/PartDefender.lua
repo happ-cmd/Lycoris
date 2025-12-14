@@ -77,8 +77,8 @@ end)
 ---Update PartDefender object.
 ---@param self PartDefender
 PartDefender.update = LPH_NO_VIRTUALIZE(function(self)
-	-- Skip if we're not handling delay until in hitbox.
-	if not self.timing.duih then
+	-- Skip if we're not handling delay until in hitbox or we want to use modules.
+	if not self.timing.duih or self.timing.umoa then
 		return
 	end
 
@@ -138,8 +138,14 @@ PartDefender.update = LPH_NO_VIRTUALIZE(function(self)
 	-- Clean all previous tasks. Just to be safe. We already check if it's empty... so.
 	self:clean()
 
-	-- Add actions.
-	return self:actions(self.timing)
+	---@note: Start processing the timing. Add the actions if we're not RPUE.
+	if not self.timing.rpue then
+		return self:actions(self.timing)
+	end
+
+	-- Start RPUE.
+	local info = RepeatInfo.new(self.timing, Latency.rdelay(), self:uid(10))
+	self:srpue(self.entity, self.timing, info)
 end)
 
 ---Create new PartDefender object.
@@ -174,8 +180,16 @@ function PartDefender.new(part, timing)
 		self:module(self.timing)
 	end
 
-	-- Handle no hitbox delay with no module.
-	if not self.timing.umoa and not self.timing.duih then
+	-- Handle no hitbox delay.
+	if self.timing.umoa or self.timing.duih then
+		return self
+	end
+
+	local info = RepeatInfo.new(self.timing, Latency.rdelay(), self:uid(10))
+
+	if self.timing.rpue then
+		self:srpue(self.entity, self.timing, info)
+	else
 		self:actions(self.timing)
 	end
 

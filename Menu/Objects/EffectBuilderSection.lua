@@ -28,9 +28,6 @@ end
 ---@param timing Timing
 function EffectBuilderSection:exload(timing)
 	self.effectName:SetRawValue(timing.ename)
-	self.repeatStartDelay:SetRawValue(timing._rsd)
-	self.repeatUntilParryEnd:SetRawValue(timing.rpue)
-	self.repeatParryDelay:SetRawValue(timing._rpd)
 	self.ignoreLocalPlayer:SetRawValue(timing.ilp)
 	self.forceLocalPlayer:SetRawValue(timing.flp)
 end
@@ -39,9 +36,6 @@ end
 function EffectBuilderSection:reset()
 	BuilderSection.reset(self)
 	self.effectName:SetRawValue("")
-	self.repeatParryDelay:SetRawValue(0)
-	self.repeatStartDelay:SetRawValue(0)
-	self.repeatUntilParryEnd:SetRawValue(false)
 	self.hitboxFacingOffset:SetRawValue(true)
 	self.ignoreLocalPlayer:SetRawValue(false)
 	self.forceLocalPlayer:SetRawValue(false)
@@ -99,49 +93,6 @@ function EffectBuilderSection:extra(tab)
 		Callback = self:tnc(function(timing, value)
 			timing.flp = value
 		end),
-	})
-end
-
----Initialize action tab.
-function EffectBuilderSection:action()
-	local tab = self.tabbox:AddTab("Action")
-
-	self.repeatUntilParryEnd = tab:AddToggle(nil, {
-		Text = "Repeat Parry Until End",
-		Default = false,
-		Callback = self:tnc(function(timing, value)
-			timing.rpue = value
-		end),
-	})
-
-	local depBoxOn = tab:AddDependencyBox()
-
-	self.repeatStartDelay = depBoxOn:AddInput(nil, {
-		Text = "Repeat Start Delay",
-		Default = false,
-		Callback = self:tnc(function(timing, value)
-			timing._rsd = tonumber(value) or 0
-		end),
-	})
-
-	self.repeatParryDelay = depBoxOn:AddInput(nil, {
-		Text = "Repeat Parry Delay",
-		Numeric = true,
-		Callback = self:tnc(function(timing, value)
-			timing._rpd = tonumber(value) or 0
-		end),
-	})
-
-	local depBoxOff = tab:AddDependencyBox()
-
-	self:baction(depBoxOff)
-
-	depBoxOn:SetupDependencies({
-		{ self.repeatUntilParryEnd, true },
-	})
-
-	depBoxOff:SetupDependencies({
-		{ self.repeatUntilParryEnd, false },
 	})
 end
 
