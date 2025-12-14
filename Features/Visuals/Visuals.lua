@@ -1335,6 +1335,10 @@ onWorkspaceChildAdded = LPH_NO_VIRTUALIZE(function(child)
 		return emplaceObject(child, ModelESP.new("MantraObelisk", child, "Mantra Obelisk"))
 	end
 
+	if name:match("Boundary") then
+		return emplaceObject(child, PartESP.new("VOIBoundaryESP", child, child.Name))
+	end
+
 	visualsMaid:mark(TaskSpawner.spawn("Visuals_BRWeaponCheck", function()
 		if child:IsA("MeshPart") and child:WaitForChild("InteractPrompt", 0.1) and not name:match("Barrel") then
 			return emplaceObject(child, PartESP.new("BRWeapon", child, name))
