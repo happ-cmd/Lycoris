@@ -1212,6 +1212,18 @@ local onThrownChildAdded = LPH_NO_VIRTUALIZE(function(child)
 	end))
 end)
 
+---On Shop ChildAdded.
+---@param child Instance
+local onShopChildAdded = LPH_NO_VIRTUALIZE(function(child)
+	local name = child.Name
+
+	if not child:FindFirstChild("Cost") then
+		return
+	end
+
+	return emplaceObject(child, PartESP.new("ShopESP", child, name))
+end)
+
 ---Create listener.
 ---@param instance Instance
 ---@param identifier string
@@ -1415,6 +1427,7 @@ function Visuals.init()
 	local ingredients = workspace:WaitForChild("Ingredients")
 	local thrown = workspace:WaitForChild("Thrown")
 	local terrain = workspace:WaitForChild("Terrain")
+	local shops = workspace:WaitForChild("Shops")
 
 	createListener(terrain, "Terrain", onTerrainChildAdded, onInstanceRemoving, true)
 	createListener(workspace, "Workspace", onWorkspaceChildAdded, onInstanceRemoving, true)
@@ -1423,6 +1436,7 @@ function Visuals.init()
 	createListener(npcs, "NPCs", onNPCsChildAdded, onInstanceRemoving, true)
 	createListener(ingredients, "Ingredients", onIngredientsChildAdded, onInstanceRemoving, true)
 	createListener(players, "Players", onPlayerAdded, onInstanceRemoving, true)
+	createListener(shops, "Shops", onShopChildAdded, onInstanceRemoving, true)
 
 	---@note: We only need to get this once.
 	for _, descendant in next, replicatedStorage:WaitForChild("MarkerWorkspace"):GetDescendants() do
