@@ -305,6 +305,10 @@ return LPH_NO_VIRTUALIZE(function()
 		if Tweening.active then
 			return
 		end
+		
+		if Configuration.expectToggleValue("PVPMode") then
+			return
+		end
 
 		if Configuration.expectToggleValue("Fly") then
 			updateFlyHack(rootPart, humanoid)
