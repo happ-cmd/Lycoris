@@ -1198,7 +1198,7 @@ local onThrownChildAdded = LPH_NO_VIRTUALIZE(function(child)
 	end
 
 	visualsMaid:mark(TaskSpawner.spawn("Visuals_ChestCheck", function()
-		if child.Name == 'Chest' and child:GetAttribute('LootName') ~= nil then
+		if child.Name == "Chest" and child:GetAttribute("LootName") ~= nil then
 			return emplaceObject(child, ChestESP.new("Chest", child, "Chest"))
 		end
 
@@ -1219,6 +1219,10 @@ local onShopChildAdded = LPH_NO_VIRTUALIZE(function(child)
 
 	if not child:FindFirstChild("Cost") then
 		return
+	end
+
+	if child:IsA("Model") then
+		return emplaceObject(child, ModelESP.new("ShopESP", child, name))
 	end
 
 	return emplaceObject(child, PartESP.new("ShopESP", child, name))
@@ -1362,8 +1366,8 @@ onWorkspaceChildAdded = LPH_NO_VIRTUALIZE(function(child)
 	if name:match("Boundary") then
 		return emplaceObject(child, PartESP.new("VOIBoundaryESP", child, child.Name))
 	end
-	
-	if child:GetAttribute('Rarity') and child:IsA('MeshPart') then
+
+	if child:GetAttribute("Rarity") and child:IsA("MeshPart") then
 		return emplaceObject(child, PartESP.new("VOIWeaponESP", child, child.Name))
 	end
 
