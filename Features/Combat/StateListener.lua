@@ -500,7 +500,7 @@ end)
 
 ---On effect removing.
 ---@param effect table
-local onEffectRemoving = LPH_NO_VIRTUALIZE(function(effect)
+local onEffectRemoved = LPH_NO_VIRTUALIZE(function(effect)
 	if effect.Class == "PerfectStack" then
 		StateListener.chainStacks = nil
 	end
@@ -521,10 +521,10 @@ function StateListener.init()
 	local effectReplicator = replicatedStorage:WaitForChild("EffectReplicator")
 	local effectReplicatorModule = require(effectReplicator)
 	local effectAddedSignal = Signal.new(effectReplicatorModule.EffectAdded)
-	local effectRemovingSignal = Signal.new(effectReplicatorModule.EffectRemoving)
+	local effectRemovedSignal = Signal.new(effectReplicatorModule.EffectRemoved)
 
 	stateMaid:mark(effectAddedSignal:connect("StateListener_EffectReplicated", onEffectReplicated))
-	stateMaid:mark(effectRemovingSignal:connect("StateListener_EffectRemoving", onEffectRemoving))
+	stateMaid:mark(effectRemovedSignal:connect("StateListener_EffectRemoved", onEffectRemoved))
 	stateMaid:mark(liveDescendantAdded:connect("StateListener_DescendantAdded", onDescendantAdded))
 
 	for _, effect in next, effectReplicatorModule.Effects do
