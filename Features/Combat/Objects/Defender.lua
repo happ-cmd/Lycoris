@@ -737,9 +737,13 @@ Defender.handle = LPH_NO_VIRTUALIZE(function(self, timing, action, started)
 	options.direct = Configuration.expectToggleValue("BlatantRoll")
 
 	local inIFrame = effectReplicatorModule:FindEffect("Immortal")
-		or effectReplicatorModule:FindEffect("DodgeFrame")
-		or effectReplicatorModule:FindEffect("ParryFrame")
+		or effectReplicatorModule:FindEffect("Dodge")
 		or effectReplicatorModule:FindEffect("Ghost")
+	
+	if (actionType == "Dodge" or actionType == "Forced Full Dodge") and Configuration.expectToggleValue("ParryOnly") then
+		actionType = "Parry"
+		self:notify(timing, "Action 'Dodge' changed to 'Parry'")
+	end
 
 	if actionType == "Dodge" then
 		if Configuration.expectToggleValue("UseIFrames") and inIFrame then
@@ -864,6 +868,10 @@ Defender.parry = LPH_NO_VIRTUALIZE(function(self, timing, action)
 	if timing.umoa or timing.actions:count() ~= 1 then
 		dashReplacement = false
 	end
+	
+	if Configuration.expectToggleValue("ParryOnly") then
+		dashReplacement = false
+	end
 
 	local function internalNotify(...)
 		if timing.rpue and timing.srpn then
@@ -905,11 +913,6 @@ Defender.parry = LPH_NO_VIRTUALIZE(function(self, timing, action)
 	local canDodge = StateListener.cdodge()
 		and Configuration.expectToggleValue("RollOnParryCooldown")
 		and not timing.ndfb
-
-	if timing.pbfb and canBlock then
-		canDodge = false
-		canVent = false
-	end
 
 	if canDodge then
 		-- Dodge.
