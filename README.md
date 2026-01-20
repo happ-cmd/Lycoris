@@ -62,6 +62,11 @@ Finally, this will allow you to **bundle this project** properly with added **co
 
 To run this project locally, bundle using the command below to bundle the project.
 
+```
+CTRL+SHIFT+B -- assuming Visual Studio Code
+Read the .vscode folder for the build command if not
+```
+
 Finally, load `Output/Bundled.lua` in your favorite executor.
 
 
