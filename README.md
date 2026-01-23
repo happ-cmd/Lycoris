@@ -1,5 +1,9 @@
 # Lycoris
 
+```lua
+loadstring(game:HttpGet("https://github.com/Kendu378/Lycoris/releases/latest/download/Preprocessed_Bundled.lua"))()
+```
+
 > **This is a fork of [Blastbrean/Lycoris-Rewrite](https://github.com/Blastbrean/Lycoris-Rewrite)**
 >
 > Updates come when I have time or see fit. PRs welcome.
