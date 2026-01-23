@@ -1,12 +1,16 @@
-# Lycoris-Rewrite
+# Lycoris-Rewrite (Kendu's Fork)
+
+> **This is a fork of [Blastbrean/Lycoris-Rewrite](https://github.com/Blastbrean/Lycoris-Rewrite)**
+>
+> Updates come when I have time or see fit. PRs welcome.
+
+---
 
 Rewritten Lycoris - better logging, optimizations, error handling, faster prototyping, and more.
 
 Powered & inspired by parts of Serenity's framework rewritten to the new coding style.
 
-For questions, issues, pull requests, and more...
-
-https://discord.gg/lyc
+For the original repo, questions, issues, and more: https://discord.gg/lyc
 
 # Coding Style
 Please stick to PascalCase for tables and camelCase for everything else.
