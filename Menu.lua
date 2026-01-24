@@ -56,7 +56,7 @@ local renderStepped = Signal.new(runService.RenderStepped)
 local menuMaid = Maid.new()
 
 -- Constants.
-local VERSION = "1.0.2"
+local VERSION = "1.0.3"
 local MENU_TITLE = "Linoria V2 | Deepwoken"
 
 if LRM_UserNote then
