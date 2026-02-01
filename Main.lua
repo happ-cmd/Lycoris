@@ -8,10 +8,29 @@ if not game:IsLoaded() then
 	game.Loaded:Wait()
 end
 
-local plr = game:GetService("Players").LocalPlayer
-local char = plr.Character or plr.CharacterAdded:Wait()
-char:WaitForChild("Humanoid")
-char:WaitForChild("HumanoidRootPart")
+-- Services.
+local services = {
+	Players = game:GetService("Players"),
+	CollectionService = game:GetService("CollectionService"),
+}
+
+-- Wait for character to be ready.
+local character
+repeat
+	task.wait()
+	character = services.Players.LocalPlayer.Character
+until
+	character
+	and character:FindFirstChild("Head")
+	and character:FindFirstChild("Torso")
+	and character:FindFirstChild("CharacterHandler")
+
+-- Wait for backpack to be loaded.
+repeat
+	task.wait()
+until services.CollectionService:HasTag(services.Players.LocalPlayer:WaitForChild("Backpack"), "Loaded")
+
+-- Wait for game to settle.
 task.wait(2)
 
 -- Initialize Luraph globals if they do not exist.
