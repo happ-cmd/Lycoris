@@ -203,7 +203,8 @@ function UpdateNotifier.show(version)
 	-- Dismiss button.
 	local dismissBtn = Instance.new("TextButton")
 	dismissBtn.Name = "Dismiss"
-	dismissBtn.Position = UDim2.new(0, 8, 1, -36)
+	dismissBtn.AnchorPoint = Vector2.new(0.5, 0)
+	dismissBtn.Position = UDim2.new(0.5, 0, 1, -36)
 	dismissBtn.Size = UDim2.new(1, -16, 0, 28)
 	dismissBtn.BackgroundColor3 = Library.MainColor
 	dismissBtn.BorderColor3 = Library.OutlineColor
