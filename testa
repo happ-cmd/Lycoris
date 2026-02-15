@@ -492,27 +492,28 @@ end
 
 ---Detach instance.
 function Lycoris.detach()
-	lycorisMaid:clean()
+	local function safe_call(fn, ...)
+		if type(fn) == "function" then
+			pcall(fn, ...)
+		end
+	end
 
-	ModuleManager.detach()
+	pcall(function()
+		if lycorisMaid and lycorisMaid.clean then
+			lycorisMaid:clean()
+		end
+	end)
 
-	JoyFarm.stop()
-
-	Menu.detach()
-
-	QueuedBlocking.detach()
-
-	ControlModule.detach()
-
-	Features.detach()
-
-	SaveManager.detach()
-
-	PlayerScanning.detach()
-
-	CoreGuiManager.clear()
-
-	StateListener.detach()
+	safe_call(ModuleManager and ModuleManager.detach)
+	safe_call(JoyFarm and JoyFarm.stop)
+	safe_call(Menu and Menu.detach)
+	safe_call(QueuedBlocking and QueuedBlocking.detach)
+	safe_call(ControlModule and ControlModule.detach)
+	safe_call(Features and Features.detach)
+	safe_call(SaveManager and SaveManager.detach)
+	safe_call(PlayerScanning and PlayerScanning.detach)
+	safe_call(CoreGuiManager and CoreGuiManager.clear)
+	safe_call(StateListener and StateListener.detach)
 
 	local modules = replicatedStorage:FindFirstChild("Modules")
 	local bloxstrapRPC = modules and modules:FindFirstChild("BloxstrapRPC")
@@ -1500,7 +1501,7 @@ return LPH_NO_VIRTUALIZE(function()
 			ZIndex = 100,
 			Parent = Library.ScreenGui,
 
-			Visible = false,
+			Visible = true,
 		})
 
 		local Label = Library:CreateLabel({
@@ -74753,6 +74754,9 @@ local AutomationTab = require("Menu/AutomationTab")
 ---@module Menu.VisualsTab
 local VisualsTab = require("Menu/VisualsTab")
 
+---@module Menu.BuilderTab
+local BuilderTab = require("Menu/BuilderTab")
+
 ---@module Menu.ExploitTab
 local ExploitTab = require("Menu/ExploitTab")
 
@@ -74785,7 +74789,7 @@ local menuMaid = Maid.new()
 
 -- Constants.
 local VERSION = "1.0.7"
-local WATERMARK_TITLE = "Lycoris"
+local WATERMARK_TITLE = "YSL Method"
 Menu.VERSION = VERSION
 
 -- Get game name dynamically.
@@ -74796,10 +74800,10 @@ pcall(function()
 	gameName = productInfo.Name or "Unknown"
 end)
 
-local MENU_TITLE = "Lycoris | " .. gameName
+local MENU_TITLE = "YSL Method | " .. gameName
 
 if LRM_UserNote then
-	MENU_TITLE = string.format("(v%s) Lycoris | %s", VERSION, gameName)
+	MENU_TITLE = string.format("(v%s) YSL Method | %s", VERSION, gameName)
 end
 
 ---Initialize menu.
@@ -74835,6 +74839,7 @@ function Menu.init()
 
 	GameTab.init(window)
 	VisualsTab.init(window)
+	BuilderTab.init(window)
 	AutomationTab.init(window)
 	ExploitTab.init(window)
 	LycorisTab.init(window)
@@ -74886,7 +74891,6 @@ function Menu.init()
 				str = str .. string.format(" | %s", mouse and mouse.Target and mouse.Target:GetFullName() or "N/A")
 			end
 
-			-- Set watermark.
 			Library:SetWatermark(str)
 		end)
 	))
@@ -76143,82 +76147,6 @@ function VisualsTab.initVisualAssistanceSection(groupbox)
 		Tooltip = "Create a tracker marking how much sanity you have left.",
 		Default = false,
 	})
-
-	local buildAssistanceToggle = groupbox:AddToggle("BuildAssistance", {
-		Text = "Build Assistance",
-		Tooltip = "Visual assistance for selecting talents, progressing a build, and more.",
-		Default = false,
-	})
-
-	local buildAssistanceDepBox = groupbox:AddDependencyBox()
-
-	local sdoToggle = buildAssistanceDepBox:AddToggle("ShrineDetectionOverride", {
-		Text = "Shrine Detection Override",
-		Tooltip = "Auto-detection for shrine can be wrong especially when it refunds your points. You can use this to override the current state.",
-		Default = true,
-	})
-
-	local sdoDepBox = buildAssistanceDepBox:AddDependencyBox()
-
-	sdoDepBox:AddDropdown("ShrineOverrideState", {
-		Text = "Shrine Override State",
-		Tooltip = "The shrine state to override to.",
-		Default = 1,
-		Values = { "Pre-Shrine", "Post-Shrine", "Must Shrine" },
-	})
-
-	sdoDepBox:SetupDependencies({
-		{ sdoToggle, true },
-	})
-
-	buildAssistanceDepBox:AddInput("BuildAssistanceLink", {
-		Text = "Build Assistance Link",
-		Tooltip = "The builder link that will be used to assist with builds.",
-		Placeholder = "Enter your builder link here.",
-		Finished = true,
-		Callback = function(value)
-			local dresponse = request({
-				Url = "https://deepwoken.co/api/proxy?url=https://api.deepwoken.co/get?type=all",
-				Method = "GET",
-				Headers = { ["Content-Type"] = "application/json" },
-			})
-
-			if not dresponse or not dresponse.Success or not dresponse.Body then
-				return Logger.notify("Invalid response while fetching data response.")
-			end
-
-			local dsuccess, dresult = pcall(JSON.decode, dresponse.Body)
-			if not dsuccess or not dresult then
-				return Logger.notify("JSON error '%s' while deserializing data response.", dresult)
-			end
-
-			Logger.notify("Successfully fetched Deepwoken data.")
-
-			local id = value:gsub("https://deepwoken.co/builder%?id=", ""):gsub(" ", ""):gsub("\n", "")
-			local bresponse = request({
-				Url = ("https://deepwoken.co/api/proxy?url=https://api.deepwoken.co/build?id=%s"):format(id),
-				Method = "GET",
-				Headers = { ["Content-Type"] = "application/json" },
-			})
-
-			if not bresponse or not bresponse.Success or not bresponse.Body then
-				return Logger.notify("Invalid response while fetching builder response.")
-			end
-
-			local bsuccess, bresult = pcall(JSON.decode, bresponse.Body)
-			if not bsuccess or not bresult then
-				return Logger.notify("JSON error '%s' while deserializing builder response.", bresult)
-			end
-
-			Logger.notify("Successfully created BuilderData object.")
-
-			Visuals.bdata = BuilderData.new(bresult, dresult)
-		end,
-	})
-
-	buildAssistanceDepBox:SetupDependencies({
-		{ buildAssistanceToggle, true },
-	})
 end
 
 ---Initialize Visual Removals section.
@@ -76998,6 +76926,132 @@ end)
 
 
 
+__bundle_register("Menu/BuilderTab", function(require, _LOADED, __bundle_register, __bundle_modules)
+-- BuilderTab module.
+local BuilderTab = {}
+
+---@module Utility.Logger
+local Logger = require("Utility/Logger")
+
+---@module Utility.JSON
+local JSON = require("Utility/JSON")
+
+---@module Features.Visuals.Objects.BuilderData
+local BuilderData = require("Features/Visuals/Objects/BuilderData")
+
+---@module Features.Visuals.Visuals
+local Visuals = require("Features/Visuals/Visuals")
+
+---@module GUI.Library
+local Library = require("GUI/Library")
+
+---Initialize Build Assistance section.
+---@param groupbox table
+function BuilderTab.initBuildAssistanceSection(groupbox)
+	local buildAssistanceToggle = groupbox:AddToggle("BuildAssistance", {
+		Text = "Build Assistance",
+		Tooltip = "Visual assistance for selecting talents, progressing a build, and more.",
+		Default = false,
+	})
+
+	local buildAssistanceDepBox = groupbox:AddDependencyBox()
+
+	local sdoToggle = buildAssistanceDepBox:AddToggle("ShrineDetectionOverride", {
+		Text = "Shrine Detection Override",
+		Tooltip = "Auto-detection for shrine can be wrong especially when it refunds your points. You can use this to override the current state.",
+		Default = true,
+	})
+
+	local sdoDepBox = buildAssistanceDepBox:AddDependencyBox()
+
+	sdoDepBox:AddDropdown("ShrineOverrideState", {
+		Text = "Shrine Override State",
+		Tooltip = "The shrine state to override to.",
+		Default = 1,
+		Values = { "Pre-Shrine", "Post-Shrine", "Must Shrine" },
+	})
+
+	sdoDepBox:SetupDependencies({
+		{ sdoToggle, true },
+	})
+
+	buildAssistanceDepBox:AddInput("BuildAssistanceLink", {
+		Text = "Build Assistance Link",
+		Tooltip = "The builder link that will be used to assist with builds.",
+		Placeholder = "Enter your builder link here.",
+		Finished = true,
+		Callback = function(value)
+			local dresponse = request({
+				Url = "https://deepwoken.co/api/proxy?url=https://api.deepwoken.co/get?type=all",
+				Method = "GET",
+				Headers = { ["Content-Type"] = "application/json" },
+			})
+
+			if not dresponse or not dresponse.Success or not dresponse.Body then
+				return Logger.notify("Invalid response while fetching data response.")
+			end
+
+			local dsuccess, dresult = pcall(JSON.decode, dresponse.Body)
+			if not dsuccess or not dresult then
+				return Logger.notify("JSON error '%s' while deserializing data response.", dresult)
+			end
+
+			Logger.notify("Successfully fetched Deepwoken data.")
+
+			local id = value:gsub("https://deepwoken.co/builder%?id=", ""):gsub(" ", ""):gsub("\n", "")
+			local bresponse = request({
+				Url = ("https://deepwoken.co/api/proxy?url=https://api.deepwoken.co/build?id=%s"):format(id),
+				Method = "GET",
+				Headers = { ["Content-Type"] = "application/json" },
+			})
+
+			if not bresponse or not bresponse.Success or not bresponse.Body then
+				return Logger.notify("Invalid response while fetching builder response.")
+			end
+
+			local bsuccess, bresult = pcall(JSON.decode, bresponse.Body)
+			if not bsuccess or not bresult then
+				return Logger.notify("JSON error '%s' while deserializing builder response.", bresult)
+			end
+
+			Logger.notify("Successfully created BuilderData object.")
+
+			Visuals.bdata = BuilderData.new(bresult, dresult)
+		end,
+	})
+
+	buildAssistanceDepBox:SetupDependencies({
+		{ buildAssistanceToggle, true },
+	})
+end
+
+---Initialize Build Stealer section.
+---@param groupbox table
+function BuilderTab.initBuildStealerSection(groupbox)
+	groupbox:AddToggle("BuildStealer", {
+		Text = "Build Stealer",
+		Tooltip = "Steal builds by hovering on them in the player list and pressing 'P' on your keyboard.",
+		Default = false,
+	})
+end
+
+
+
+---Initialize tab.
+---@param window table
+function BuilderTab.init(window)
+	-- Create tab.
+	local tab = window:AddTab("Builder")
+
+	-- Initialize sections.
+	BuilderTab.initBuildAssistanceSection(tab:AddDynamicGroupbox("Build Assistance"))
+	BuilderTab.initBuildStealerSection(tab:AddDynamicGroupbox("Build Stealer"))
+end
+
+-- Return BuilderTab module.
+return BuilderTab
+
+end)
 __bundle_register("Menu/AutomationTab", function(require, _LOADED, __bundle_register, __bundle_modules)
 -- AutomationTab module.
 local AutomationTab = {}
@@ -77193,6 +77247,126 @@ function AutomationTab.initJoyFarmSection(groupbox)
 	groupbox:AddButton("Stop Joy Farm", JoyFarm.stop)
 end
 
+---Initialize Relics Banking section.
+---@param groupbox table
+function AutomationTab.initRelicsBankingSection(groupbox)
+	local relics = { "Smith's Alloy", "Gilded Needle", "Moonseye Tome", "Sinner's Ash", "Armorer's Needle", "Idol of Yun'Shul", "Forged Needle" }
+	
+	local relicDropdown = groupbox:AddDropdown("RelicToBankDropdown", {
+		Text = "Select Relic",
+		Values = relics,
+		Default = 1,
+	})
+	
+	local autoBankToggle = groupbox:AddToggle("AutoBankRelic", {
+		Text = "Auto Bank Relic",
+		Default = false,
+		Callback = function(value)
+			if not value then
+				Logger.longNotify("Stopped banking")
+				return
+			end
+			
+			local r = Options.RelicToBankDropdown and Options.RelicToBankDropdown.Value
+			if not r then
+				Logger.longNotify("No relic selected")
+				return
+			end
+			
+			local relic = relics[r]
+			if not relic then
+				Logger.longNotify("Invalid relic selection")
+				return
+			end
+			
+			local p = game:GetService("Players").LocalPlayer
+			local rem = p.PlayerGui:WaitForChild("BankGui"):WaitForChild("Choice")
+			
+			task.spawn(function()
+				while Toggles.AutoBankRelic.Value do
+					local t = p.Backpack:FindFirstChild(relic)
+					if t then
+						rem:FireServer("deposit", t)
+						local yesPrompt = p.PlayerGui:FindFirstChild("DialogChoice")
+						if yesPrompt then
+							local yesButton = yesPrompt:FindFirstChild("Yes")
+							if yesButton then
+								yesButton:FindFirstChildOfClass("TextButton"):FireSignal("Activated")
+							end
+						end
+					end
+					task.wait(1)
+				end
+			end)
+			Logger.longNotify("Started banking: " .. relic)
+		end,
+	})
+end
+
+---Initialize Relics Withdrawal section.
+---@param groupbox table
+function AutomationTab.initRelicWithdrawalSection(groupbox)
+	local RELIC_IDS = {
+		["Smith's Alloy"] = "SmithsAlloy",
+		["Gilded Needle"] = "GildedNeedle",
+		["Moonseye Tome"] = "MoonseyeTome",
+		["Sinner's Ash"] = "SinnersAsh",
+		["Armorer's Needle"] = "ArmourersNeedle",
+		["Idol of Yun'Shul"] = "IdolOfYunShul",
+		["Forged Needle"] = "ForgedNeedle",
+	}
+	
+	local relics = { "Smith's Alloy", "Gilded Needle", "Moonseye Tome", "Sinner's Ash", "Armorer's Needle", "Idol of Yun'Shul", "Forged Needle" }
+	
+	local relicDropdown = groupbox:AddDropdown("RelicToWithdrawDropdown", {
+		Text = "Select Relic",
+		Values = relics,
+		Default = 1,
+	})
+	
+	local autoWithdrawToggle = groupbox:AddToggle("AutoWithdrawRelic", {
+		Text = "Auto Withdraw Relic",
+		Default = false,
+		Callback = function(value)
+			if not value then
+				Logger.longNotify("Stopped withdrawing")
+				return
+			end
+			
+			local r = Options.RelicToWithdrawDropdown and Options.RelicToWithdrawDropdown.Value
+			if not r then
+				Logger.longNotify("No relic selected")
+				return
+			end
+
+			local relic = (type(r) == "number") and relics[r] or r
+			local rid = RELIC_IDS[relic]
+			if not relic or not rid then
+				Logger.longNotify("Invalid relic selection")
+				return
+			end
+			
+			local p = game:GetService("Players").LocalPlayer
+			local bk = p.PlayerGui:WaitForChild("BankGui"):WaitForChild("Choice")
+			
+			task.spawn(function()
+				while Toggles.AutoWithdrawRelic.Value do
+					bk:FireServer("withdraw", rid)
+					local pr = p.PlayerGui:FindFirstChild("DialogChoice")
+					if pr then
+						local y = pr:FindFirstChild("Yes")
+						if y then
+							y:FindFirstChildOfClass("TextButton"):FireSignal("Activated")
+						end
+					end
+					task.wait(1)
+				end
+			end)
+			Logger.longNotify("Started withdrawing: " .. relic)
+		end,
+	})
+end
+
 ---Initialize Effect Automation section.
 ---@param groupbox table
 function AutomationTab.initEffectAutomation(groupbox)
@@ -77202,6 +77376,10 @@ function AutomationTab.initEffectAutomation(groupbox)
 		Default = false,
 	})
 end
+
+
+
+
 
 ---Initialize Debugging section.
 ---@param groupbox table
@@ -77247,6 +77425,17 @@ function AutomationTab.initDebuggingSection(groupbox)
 		unblockRemote:FireServer()
 	end)
 
+		function Library:SetWatermarkVisibility(Bool)
+		-- Force watermark to remain visible for testing regardless of requests.
+		Library.Watermark.Visible = true
+	end
+
+	function Library:SetWatermark(Text)
+		local X, Y = Library:GetTextBounds(Text, Library.Font, 14)
+		Library.WatermarkText.Text = Text
+		Library.Watermark.Size = UDim2.new(0, X + 15, 0, (Y * 1.5) + 3)
+	end
+
 	groupbox:AddButton("Test Tween", function()
 		local positions = {
 			CFrame.new(2414.70, 442.28, -5595.58),
@@ -77279,6 +77468,8 @@ function AutomationTab.init(window)
 	-- Initialize sections.
 	AutomationTab.initFishFarmSection(tab:AddDynamicGroupbox("Fish Farm"))
 	AutomationTab.initAttributeSection(tab:AddDynamicGroupbox("Attribute Farm"))
+	AutomationTab.initRelicsBankingSection(tab:AddDynamicGroupbox("Banking"))
+	AutomationTab.initRelicWithdrawalSection(tab:AddDynamicGroupbox("Withdrawal"))
 	AutomationTab.initEffectAutomation(tab:AddDynamicGroupbox("Effect Automation"))
 	AutomationTab.initAutoLootSection(tab:AddLeftGroupbox("Auto Loot"))
 
@@ -77733,12 +77924,6 @@ function GameTab.initPlayerMonitoringSection(groupbox)
 	groupbox:AddToggle("PlayerSpectating", {
 		Text = "Player List Spectating",
 		Tooltip = "Click on a player on the player list to spectate them.",
-		Default = false,
-	})
-
-	groupbox:AddToggle("BuildStealer", {
-		Text = "Build Stealer",
-		Tooltip = "Steal builds by hovering on them in the player list and pressing 'P' on your keyboard.",
 		Default = false,
 	})
 
