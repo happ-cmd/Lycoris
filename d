@@ -68,7 +68,7 @@ local Water = {
 	silentUnlockedCamera = true,
 
 	autoGuard = true,
-	autoGuardDebugging = true,
+	autoGuardDebugging = false,
 	autoGuardTeleporting = false,
 	autoGuardRedirectTowardsCenter = true,
 }
