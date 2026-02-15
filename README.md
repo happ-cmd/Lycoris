@@ -1,6 +1,6 @@
 # Lycoris
 
-> **This is a fork of [Blastbrean/Kendu's fork of Lycoris-Rewrite](https://github.com/Blastbrean/Lycoris-Rewrite)** (https://github.com/Kendu378/Lycoris)
+> **This is a fork of [Blastbrean/Lycoris-Rewrite](https://github.com/Blastbrean/Lycoris-Rewrite)** and kendu's fork(https://github.com/Kendu378/Lycoris)
 >
 >
 
