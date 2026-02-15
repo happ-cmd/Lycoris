@@ -199,9 +199,6 @@ local UpdateNotifier = require("Game/UpdateNotifier")
 ---@module Features.Automation.EchoFarm
 local EchoFarm = require("Features/Automation/EchoFarm")
 
----@module Features.Automation.JoyFarm
-local JoyFarm = require("Features/Automation/JoyFarm")
-
 -- Lycoris maid.
 local lycorisMaid = Maid.new()
 
@@ -505,7 +502,6 @@ function Lycoris.detach()
 	end)
 
 	safe_call(ModuleManager and ModuleManager.detach)
-	safe_call(JoyFarm and JoyFarm.stop)
 	safe_call(Menu and Menu.detach)
 	safe_call(QueuedBlocking and QueuedBlocking.detach)
 	safe_call(ControlModule and ControlModule.detach)
@@ -77352,18 +77348,6 @@ function AutomationTab.initAutoLootSection(groupbox)
 	})
 end
 
----Initialize Joy Farm section.
----@param groupbox table
-function AutomationTab.initJoyFarmSection(groupbox)
-	groupbox:AddButton({
-		Text = "Start Joy Farm",
-		Tooltip = "Make sure that you are at the start of a cycle.",
-		Func = JoyFarm.start,
-	})
-
-	groupbox:AddButton("Stop Joy Farm", JoyFarm.stop)
-end
-
 ---Initialize Relics Banking section.
 ---@param groupbox table
 function AutomationTab.initRelicsBankingSection(groupbox)
@@ -77589,10 +77573,6 @@ function AutomationTab.init(window)
 	AutomationTab.initRelicWithdrawalSection(tab:AddDynamicGroupbox("Withdrawal"))
 	AutomationTab.initEffectAutomation(tab:AddDynamicGroupbox("Effect Automation"))
 	AutomationTab.initAutoLootSection(tab:AddLeftGroupbox("Auto Loot"))
-
-	if game.PlaceId == 8668476218 then
-		AutomationTab.initJoyFarmSection(tab:AddLeftGroupbox("Joy Farm"))
-	end
 
 	if LRM_UserNote then
 		return
