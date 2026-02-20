@@ -807,7 +807,6 @@ class LuaPreprocessor:
                 continue
         
             for i, timing in enumerate(arr):
-                print(i, timing.get("_id"), var, timing.get("hitbox"))
                 # Scramble important properties
                 if timing.get("_id"):
                     timing["_id"] = self.scramble_str(timing["_id"])
