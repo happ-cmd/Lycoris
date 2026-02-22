@@ -199,9 +199,6 @@ local UpdateNotifier = require("Game/UpdateNotifier")
 ---@module Features.Automation.EchoFarm
 local EchoFarm = require("Features/Automation/EchoFarm")
 
----@module Features.Automation.JoyFarm
-local JoyFarm = require("Features/Automation/JoyFarm")
-
 -- Lycoris maid.
 local lycorisMaid = Maid.new()
 
@@ -492,27 +489,27 @@ end
 
 ---Detach instance.
 function Lycoris.detach()
-	lycorisMaid:clean()
+	local function safe_call(fn, ...)
+		if type(fn) == "function" then
+			pcall(fn, ...)
+		end
+	end
 
-	ModuleManager.detach()
+	pcall(function()
+		if lycorisMaid and lycorisMaid.clean then
+			lycorisMaid:clean()
+		end
+	end)
 
-	JoyFarm.stop()
-
-	Menu.detach()
-
-	QueuedBlocking.detach()
-
-	ControlModule.detach()
-
-	Features.detach()
-
-	SaveManager.detach()
-
-	PlayerScanning.detach()
-
-	CoreGuiManager.clear()
-
-	StateListener.detach()
+	safe_call(ModuleManager and ModuleManager.detach)
+	safe_call(Menu and Menu.detach)
+	safe_call(QueuedBlocking and QueuedBlocking.detach)
+	safe_call(ControlModule and ControlModule.detach)
+	safe_call(Features and Features.detach)
+	safe_call(SaveManager and SaveManager.detach)
+	safe_call(PlayerScanning and PlayerScanning.detach)
+	safe_call(CoreGuiManager and CoreGuiManager.clear)
+	safe_call(StateListener and StateListener.detach)
 
 	local modules = replicatedStorage:FindFirstChild("Modules")
 	local bloxstrapRPC = modules and modules:FindFirstChild("BloxstrapRPC")
@@ -804,7 +801,6 @@ function JoyFarm.stop()
 	joyFarmMaid:clean()
 end
 
--- Return JoyFarm module.
 return JoyFarm
 
 end)
@@ -1501,7 +1497,7 @@ return LPH_NO_VIRTUALIZE(function()
 			ZIndex = 100,
 			Parent = Library.ScreenGui,
 
-			Visible = false,
+			Visible = true,
 		})
 
 		local Label = Library:CreateLabel({
@@ -5651,7 +5647,7 @@ function CoreGuiManager.clear()
 	instances = {}
 end
 
--- Return CoreGuiManager module.
+---Return CoreGuiManager module.
 return CoreGuiManager
 
 end)
@@ -5695,7 +5691,7 @@ return LPH_NO_VIRTUALIZE(function()
 		end
 	end
 
-	-- Return Profiler module.
+	-- Return profiler module.
 	return Profiler
 end)()
 
@@ -7406,7 +7402,7 @@ InputClient.feint = LPH_NO_VIRTUALIZE(function()
 		return Logger.warn("Cannot dodge without effect replicator module.")
 	end
 
-	-- ClientFeint inlined.
+	-- ClientFeint inlined
 	if effectReplicatorModule:HasEffect("ClientDodge") then
 		effectReplicatorModule:CreateEffect("ClientFeint"):Debris(0.4)
 	end
@@ -7889,7 +7885,7 @@ Maid.new = LPH_NO_VIRTUALIZE(function()
 end)
 
 ---Return maid[key] - if not, it's not apart of the maid metatable - so we return the relevant task.
----@return value
+-- @return value
 Maid.__index = LPH_NO_VIRTUALIZE(function(self, index)
 	if Maid[index] then
 		return Maid[index]
@@ -8137,7 +8133,7 @@ Finder.near = LPH_NO_VIRTUALIZE(function(position, range)
 	return (position - localRootPart.Position).Magnitude <= range
 end)
 
----Wait for the shrine. Deepwoken is weird so it can be both thrown or non-thrown.
+---Wait for the shrine. Deepwoken is weird so it can be both thrown or non-thrown?
 ---@return Model?
 Finder.wshrine = LPH_NO_VIRTUALIZE(function()
 	local thrown = workspace:FindFirstChild("Thrown")
@@ -8156,7 +8152,7 @@ Finder.wshrine = LPH_NO_VIRTUALIZE(function()
 	return shrine
 end)
 
----Is a entity (not us or a player) within X studs of the specified position.
+---Is a entity (not us or a player) within X studs of the specified position?
 ---@param position Vector3
 ---@param range number
 ---@return Model|nil
@@ -8190,7 +8186,7 @@ Finder.enear = LPH_NO_VIRTUALIZE(function(position, range)
 	return nil
 end)
 
----Is a player within X studs of the specified position.
+---Is a player within X studs of the specified position?
 ---@param position Vector3
 ---@param range number
 ---@return Player|nil
@@ -8238,7 +8234,7 @@ Finder.entity = LPH_NO_VIRTUALIZE(function(name)
 	end
 end)
 
----Is a tool currently being locked by cooldown.
+---Is a tool currently being locked by cooldown?
 ---@param tool Tool
 ---@return boolean
 Finder.cdlocked = LPH_NO_VIRTUALIZE(function(tool)
@@ -8684,7 +8680,7 @@ function FiniteStateMachine:get(identifier)
 	return Logger.warn(string.format("(%s) State does not exist in states table.", identifier))
 end
 
----Get a state.
+---Get a state
 ---@param identifier string
 ---@return boolean
 function FiniteStateMachine:has(identifier)
@@ -8988,7 +8984,7 @@ function AntiAFK.start(identifier)
 	AntiAFK.wanters[identifier] = true
 end
 
----Remove a "wanter" for AntiAFK.
+-- Remove a "wanter" for AntiAFK.
 function AntiAFK.stop(identifier)
 	AntiAFK.wanters[identifier] = nil
 end
@@ -9125,7 +9121,7 @@ local DEBUGGING_MODE = true
 -- Maid.
 local echoFarmMaid = Maid.new()
 
--- Currently running.
+-- Currently running?
 local running = false
 
 ---Telemetry log.
@@ -9665,7 +9661,7 @@ local currentChoice = nil
 -- The queue of items to be looted from the remote.
 local lootQueue = {}
 
--- Are we currently in loot all mode.
+-- Are we currently in loot all mode?
 local lootAll = false
 
 -- Services.
@@ -9749,7 +9745,7 @@ local function waitForPromptDeletion(prompt, remote, param)
 	resetAutoLoot()
 end
 
----Is the auto loot active.
+---Is the auto loot active?
 ---@return boolean
 function AutoLoot.active()
 	return choiceRemote ~= nil and currentPrompt ~= nil and #lootQueue > 0
@@ -9872,7 +9868,7 @@ function AutoLoot.detach()
 	autoLootMaid:clean()
 end
 
--- Return AutoLoot module.
+-- Return the AutoLoot module.
 return AutoLoot
 
 end)
@@ -10987,7 +10983,7 @@ function Deserializer.unmarshal_one(data)
 	return Deserializer.at(DeserializerStream.new(data))
 end
 
--- Return Deserializer module.
+-- Return Deseralizer module.
 return Deserializer
 
 end)
@@ -11382,35 +11378,35 @@ local function serializeNil()
 	return string.pack("B", 0xc0)
 end
 
----Serialize table to a binary string.
+---serialize table to a binary string
 ---@param value table
 ---@return string
 local function serializeTable(value)
 	return isAnArray(value) and serializeArray(value) or serializeMap(value)
 end
 
----Serialize boolean to a binary string.
+---serialize boolean to a binary string
 ---@param value boolean
 ---@return string
 local function serializeBoolean(value)
 	return string.pack("B", value and 0xc3 or 0xc2)
 end
 
----Serialize int to a binary string.
+---serialize int to a binary string
 ---@param value number
 ---@return string
 local function serializeInt(value)
 	return value >= 0 and serializeSignedInt(value) or serializeUnsignedInt(value)
 end
 
----Serialize number to a binary string.
+---serialize number to a binary string
 ---@param value number
 ---@return string
 local function serializeNumber(value)
 	return value % 1 == 0 and serializeInt(value) or serializeFloat(value)
 end
 
----Serialize string to a binary string.
+---serialize string to a binary string
 ---@param value number
 ---@return string
 local function serializeString(value)
@@ -11863,7 +11859,7 @@ function UpdateNotifier.show(version)
 		dismissBtn.BackgroundColor3 = Library.MainColor
 	end)
 
-	---Fade in.
+	-- Fade in.
 	local function fadeIn()
 		tweenService:Create(overlay, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
 			BackgroundTransparency = 0.5
@@ -11884,7 +11880,7 @@ function UpdateNotifier.show(version)
 		tweenService:Create(dismissBtn, TweenInfo.new(0.3), { BackgroundTransparency = 0, TextTransparency = 0 }):Play()
 	end
 
-	---Fade out.
+	-- Fade out.
 	local function fadeOut()
 		tweenService:Create(overlay, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
 			BackgroundTransparency = 1
@@ -14083,56 +14079,6 @@ local INTERNAL_MODULES = {
         	action.hitbox = Vector3.new(30, 23, 27)
         	action.name = string.format("(%.2f) Gale Heroblade Crit Timing", distance)
         	return self:action(timing, action)
-        end
-    end,
-    ["GenericTelegraph"] = function()
-        ---@type Action
-        local Action = getfenv().Action
-
-        -- Services.
-        local players = game:GetService("Players")
-
-        ---Module function.
-        ---@param self EffectDefender
-        ---@param timing EffectTiming
-        return function(self, timing)
-            local selfCharacter = players.LocalPlayer.Character;
-        	if self.owner ~= selfCharacter then
-        		return
-        	end
-
-
-            local effectData = self.data;
-
-            local telegraphType = effectData.telegraph;
-            local part = effectData.part;
-
-            if part and part:IsDescendantOf(selfCharacter) and part.Name == "HumanoidRootPart" then --Weapon Manual Telegraph (caster: self.character & part: hrp)
-                local dur = effectData.dur; --note: if you are working on this module, the real game code has a or 0.5 here, but it's not needed for weapon manual.
-                if dur ~= 1 then
-                    return;
-                end
-
-                if not table.find({
-                    "dodge_only",
-                    "block_only",
-                    "parry_only"
-                }, telegraphType) then return; end
-
-        	    self:hook("target", function(_)
-        	    	return true
-        	    end)
-
-        	    local action = Action.new()
-        	    action._when = 950 -- it is 1s but we do want to parry earlier due to the fact the user might not have 'Ping Compensation' on.
-        	    action._type = telegraphType == "dodge_only" and "Dodge" or "Parry"
-        	    action.ihbc = true
-        	    action.name = "Dynamic Weapon Manual Timing"       
-
-                return self:action(timing, action)
-            end
-
-        	return;
         end
     end,
     ["GlacialArc"] = function()
@@ -20764,10 +20710,10 @@ local onDescendantAdded = LPH_NO_VIRTUALIZE(function(descendant)
 		animationPlayed:connect("StateListener_AnimationPlayed", onLocalAnimationPlayed)
 end)
 
----Is an effect within a specific time.
+---Is an effect within a specific time?
 ---@param effect table
 ---@param time number? If the number is unspecified, it will use the Debris time.
----@param offset boolean If the number is specified, this will be used as an offset from the Debris time.
+---@param offset boolean If the number is specified, should we use it as an offset from the Debris time?
 ---@return boolean
 local withinTime = LPH_NO_VIRTUALIZE(function(effect, time, offset)
 	if not effect.index then
@@ -20791,7 +20737,7 @@ local withinTime = LPH_NO_VIRTUALIZE(function(effect, time, offset)
 	return os.clock() - timestamp <= (time or dtime)
 end)
 
----Are we currently holding block.
+---Are we currently holding block?
 ---@return boolean
 StateListener.hblock = LPH_NO_VIRTUALIZE(function()
 	local keybinds = replicatedStorage:FindFirstChild("KeyBinds")
@@ -20825,7 +20771,7 @@ StateListener.hblock = LPH_NO_VIRTUALIZE(function()
 	return false
 end)
 
----Are we currently casting Sightless Beam.
+---Are we currently casting Sightless Beam?
 ---@return boolean
 StateListener.csb = LPH_NO_VIRTUALIZE(function()
 	if not StateListener.lMantraActivated then
@@ -20870,7 +20816,7 @@ StateListener.csb = LPH_NO_VIRTUALIZE(function()
 	return false
 end)
 
----Are we in action stun. That small window after doing an action where you can't do anything.
+--Are we in action stun? That small window after doing an action where you can't do anything.
 ---@return boolean
 StateListener.astun = LPH_NO_VIRTUALIZE(function()
 	local effectReplicator = replicatedStorage:WaitForChild("EffectReplicator")
@@ -20894,7 +20840,7 @@ StateListener.astun = LPH_NO_VIRTUALIZE(function()
 	return false
 end)
 
----Can we vent.
+---Can we vent?
 ---@return boolean
 StateListener.cvent = LPH_NO_VIRTUALIZE(function()
 	local effectReplicator = replicatedStorage:WaitForChild("EffectReplicator")
@@ -20934,7 +20880,7 @@ StateListener.cvent = LPH_NO_VIRTUALIZE(function()
 	return true
 end)
 
----Can we parry.
+---Can we parry?
 ---@return boolean
 StateListener.cparry = LPH_NO_VIRTUALIZE(function()
 	local effectReplicator = replicatedStorage:WaitForChild("EffectReplicator")
@@ -20956,7 +20902,7 @@ StateListener.cparry = LPH_NO_VIRTUALIZE(function()
 	return true
 end)
 
----Can we feint.
+---Can we feint?
 ---@return boolean
 StateListener.cfeint = LPH_NO_VIRTUALIZE(function()
 	local effectReplicator = replicatedStorage:WaitForChild("EffectReplicator")
@@ -20970,7 +20916,7 @@ StateListener.cfeint = LPH_NO_VIRTUALIZE(function()
 	return true
 end)
 
----Can we block.
+---Can we block?
 ---@return boolean
 StateListener.cblock = LPH_NO_VIRTUALIZE(function()
 	local character = players.LocalPlayer and players.LocalPlayer.Character
@@ -21005,7 +20951,7 @@ StateListener.cblock = LPH_NO_VIRTUALIZE(function()
 	return true
 end)
 
----Can we dodge.
+---Can we dodge?
 ---@return boolean
 StateListener.cdodge = LPH_NO_VIRTUALIZE(function()
 	local effectReplicator = replicatedStorage:WaitForChild("EffectReplicator")
@@ -21028,7 +20974,7 @@ StateListener.cdodge = LPH_NO_VIRTUALIZE(function()
 	return true
 end)
 
----Are we in chime countdown.
+---Are we in chime countdown?
 ---@return boolean
 StateListener.ccd = LPH_NO_VIRTUALIZE(function()
 	return game.PlaceId == CHIME_ARENA_PLACE_ID and workspace.DistributedGameTime < 15
@@ -21241,7 +21187,7 @@ local function onRenderStepped()
 		return QueuedBlocking.empty()
 	end
 
-	-- Are we blocking.
+	-- Are we blocking?
 	local blocking = effectReplicatorModule:HasEffect("Blocking")
 
 	-- Set up input data.
@@ -21269,7 +21215,7 @@ local function onRenderStepped()
 	-- Handle blocking input.
 	inputData["f"] = blockQueueLength > 0
 
-	-- Call with direct functions so our hooks call.
+	-- Call with direct functions so our hooks call...
 	local fireServer = Instance.new("RemoteEvent").FireServer
 
 	if blocking then
@@ -56983,7 +56929,7 @@ function SaveManager.init()
 	    	            tag = "Undefined",
 	    	            STOP_TRYING_TO_DUMP_TIMINGS_LOL = "You can't unless you reverse Luraph or dynamically dump them <3"
 	    	        },
-	    ["XHRKYYO^CN\016\005\005\027\026\026\029\029\029\027\024\025\026\029\027\027\029\025"] = {
+	    ["XHRKYYO^CN\016\005\005\027\025\024\029\019\024\027\031\031\018\029\029\024\029\026"] = {
 	    	            rpd = 0,
 	    	            hso = 0,
 	    	            ieae = false,
@@ -56992,55 +56938,32 @@ function SaveManager.init()
 	    	                    _type = "zKXXS",
 	    	                    name = "\027",
 	    	                    hitbox = {
-	    	                        X = -65.91666666666667,
-	    	                        Y = -66.83333333333333,
-	    	                        Z = -66.5
+	    	                        X = -66.91666666666667,
+	    	                        Y = -67.41666666666667,
+	    	                        Z = -67.33333333333333
 	    	                    },
-	    	                    when = -26.083333333333336,
+	    	                    when = 35.58333333333333,
 	    	                    ihbc = false
 	    	                },
 	    	                {
 	    	                    _type = "zKXXS",
 	    	                    name = "\024",
 	    	                    hitbox = {
-	    	                        X = -65.91666666666667,
-	    	                        Y = -66.83333333333333,
-	    	                        Z = -66.5
+	    	                        X = -67.25,
+	    	                        Y = -67.41666666666667,
+	    	                        Z = -67.33333333333333
 	    	                    },
-	    	                    when = 24.75,
-	    	                    ihbc = false
-	    	                },
-	    	                {
-	    	                    _type = "y^KX^\010iXE_IB",
-	    	                    name = "\025",
-	    	                    hitbox = {
-	    	                        X = -65.91666666666667,
-	    	                        Y = -66.83333333333333,
-	    	                        Z = -66.5
-	    	                    },
-	    	                    when = 36.41666666666667,
-	    	                    ihbc = false
-	    	                },
-	    	                {
-	    	                    _type = "oDN\010iXE_IB",
-	    	                    name = "\030",
-	    	                    hitbox = {
-	    	                        X = -65.91666666666667,
-	    	                        Y = -66.83333333333333,
-	    	                        Z = -66.5
-	    	                    },
-	    	                    when = 128.08333333333334,
+	    	                    when = -22.75,
 	    	                    ihbc = false
 	    	                }
 	    	            },
 	    	            ndfb = false,
-	    	            nbfb = false,
-	    	            _id = "XHRKYYO^CN\016\005\005\027\026\026\029\029\029\027\024\025\026\029\027\027\029\025",
+	    	            _id = "XHRKYYO^CN\016\005\005\027\025\024\029\019\024\027\031\031\018\029\029\024\029\026",
 	    	            mat = 2000,
 	    	            rpue = false,
 	    	            srpn = false,
 	    	            punishable = 0,
-	    	            name = "cIOiBKGZCED\025bC^",
+	    	            name = "iBEX_YiXC^",
 	    	            hitbox = {
 	    	                X = -68.58333333333333,
 	    	                Y = -68.58333333333333,
@@ -57050,89 +56973,131 @@ function SaveManager.init()
 	    	            imdd = -68.58333333333333,
 	    	            duih = false,
 	    	            rsd = 0,
-	    	            umoa = false,
-	    	            smod = "d\005k",
+	    	            umoa = true,
+	    	            smod = "iBEX_YiXC^",
 	    	            bfht = 0.3,
 	    	            pfh = false,
 	    	            after = 0,
 	    	            imb = false,
 	    	            dp = false,
-	    	            pfht = 0.15,
-	    	            phds = 0,
 	    	            phd = false,
+	    	            phds = 0,
+	    	            pfht = 0.15,
 	    	            aatk = false,
 	    	            nvfb = false,
 	    	            smn = false,
-	    	            iae = false,
 	    	            ha = true,
-	    	            imxd = 14.75,
-	    	            tag = "Undefined",
+	    	            iae = false,
+	    	            imxd = -64.16666666666667,
+	    	            tag = "Critical",
 	    	            STOP_TRYING_TO_DUMP_TIMINGS_LOL = "You can't unless you reverse Luraph or dynamically dump them <3"
 	    	        },
-	    ["XHRKYYO^CN\016\005\005\027\024\029\029\030\027\026\031\031\031\030\027\030\018\018"] = {
+	    ["XHRKYYO^CN\016\005\005\027\027\024\026\031\026\018\019\028\031\025\028\018\025\030"] = {
 	    	            rpd = 0,
 	    	            hso = 0,
 	    	            ieae = false,
 	    	            actions = {
 	    	                {
-	    	                    _type = "zKXXS",
+	    	                    _type = "nENMO",
 	    	                    name = "\027",
 	    	                    hitbox = {
-	    	                        X = -65.91666666666667,
-	    	                        Y = -66.83333333333333,
-	    	                        Z = -66.5
+	    	                        X = -43.58333333333333,
+	    	                        Y = -43.58333333333333,
+	    	                        Z = -43.58333333333333
 	    	                    },
-	    	                    when = -15.25,
+	    	                    when = -1.9166666666666714,
 	    	                    ihbc = false
 	    	                },
 	    	                {
 	    	                    _type = "zKXXS",
 	    	                    name = "\024",
 	    	                    hitbox = {
-	    	                        X = -65.91666666666667,
-	    	                        Y = -66.83333333333333,
-	    	                        Z = -66.5
+	    	                        X = 14.75,
+	    	                        Y = 14.75,
+	    	                        Z = 14.75
 	    	                    },
-	    	                    when = 43.08333333333333,
-	    	                    ihbc = false
-	    	                },
-	    	                {
-	    	                    _type = "`_GZ",
-	    	                    name = "\025",
-	    	                    hitbox = {
-	    	                        X = -65.91666666666667,
-	    	                        Y = -66.83333333333333,
-	    	                        Z = -66.5
-	    	                    },
-	    	                    when = 101.41666666666666,
-	    	                    ihbc = false
-	    	                },
-	    	                {
-	    	                    _type = "nENMO",
-	    	                    name = "\030",
-	    	                    hitbox = {
-	    	                        X = -65.91666666666667,
-	    	                        Y = -66.83333333333333,
-	    	                        Z = -66.5
-	    	                    },
-	    	                    when = 189.75,
+	    	                    when = 156.41666666666666,
 	    	                    ihbc = false
 	    	                }
 	    	            },
 	    	            ndfb = false,
 	    	            nbfb = false,
-	    	            _id = "XHRKYYO^CN\016\005\005\027\024\029\029\030\027\026\031\031\031\030\027\030\018\018",
-	    	            mat = 4000,
+	    	            _id = "XHRKYYO^CN\016\005\005\027\027\024\026\031\026\018\019\028\031\025\028\018\025\030",
+	    	            mat = 2000,
 	    	            rpue = false,
 	    	            srpn = false,
 	    	            punishable = 0,
-	    	            name = "cIOiBKGZCED\030bC^",
+	    	            name = "odgc~snkyb",
 	    	            hitbox = {
 	    	                X = -68.58333333333333,
 	    	                Y = -68.58333333333333,
 	    	                Z = -68.58333333333333
 	    	            },
-	    	            fhb = true,
+	    	            fhb = false,
+	    	            imdd = -68.58333333333333,
+	    	            duih = false,
+	    	            rsd = 0,
+	    	            umoa = false,
+	    	            smod = "d\005k",
+	    	            bfht = 0.3,
+	    	            pfh = false,
+	    	            after = 0,
+	    	            imb = false,
+	    	            dp = false,
+	    	            pfht = 0.509,
+	    	            phds = 0,
+	    	            phd = false,
+	    	            aatk = false,
+	    	            nvfb = false,
+	    	            smn = false,
+	    	            iae = false,
+	    	            ha = true,
+	    	            imxd = 59.75,
+	    	            tag = "Undefined",
+	    	            STOP_TRYING_TO_DUMP_TIMINGS_LOL = "You can't unless you reverse Luraph or dynamically dump them <3"
+	    	        },
+	    ["XHRKYYO^CN\016\005\005\019\030\030\026\027\024\026\026\030\027\024\024\025\026"] = {
+	    	            rpd = 0,
+	    	            hso = 0,
+	    	            ieae = false,
+	    	            actions = {
+	    	                {
+	    	                    _type = "zKXXS",
+	    	                    name = "\027",
+	    	                    hitbox = {
+	    	                        X = -64.41666666666667,
+	    	                        Y = -64.33333333333333,
+	    	                        Z = -64.33333333333333
+	    	                    },
+	    	                    when = -53.583333333333336,
+	    	                    ihbc = false
+	    	                },
+	    	                {
+	    	                    _type = "zKXXS",
+	    	                    name = "\024",
+	    	                    hitbox = {
+	    	                        X = -64.41666666666667,
+	    	                        Y = -64.33333333333333,
+	    	                        Z = -64.33333333333333
+	    	                    },
+	    	                    when = 18.91666666666667,
+	    	                    ihbc = false
+	    	                }
+	    	            },
+	    	            ndfb = false,
+	    	            nbfb = false,
+	    	            _id = "XHRKYYO^CN\016\005\005\019\030\030\026\027\024\026\026\030\027\024\024\025\026",
+	    	            mat = 2000,
+	    	            rpue = false,
+	    	            srpn = false,
+	    	            punishable = 0,
+	    	            name = "xK^aCDMy^KHyFKYB",
+	    	            hitbox = {
+	    	                X = -68.58333333333333,
+	    	                Y = -68.58333333333333,
+	    	                Z = -68.58333333333333
+	    	            },
+	    	            fhb = false,
 	    	            imdd = -68.58333333333333,
 	    	            duih = false,
 	    	            rsd = 0,
@@ -57151,11 +57116,11 @@ function SaveManager.init()
 	    	            smn = false,
 	    	            iae = false,
 	    	            ha = true,
-	    	            imxd = 14.75,
+	    	            imxd = -42.58333333333333,
 	    	            tag = "Undefined",
 	    	            STOP_TRYING_TO_DUMP_TIMINGS_LOL = "You can't unless you reverse Luraph or dynamically dump them <3"
 	    	        },
-	    ["XHRKYYO^CN\016\005\005\027\025\024\030\019\019\028\029\026\027\027\018\026\025\030"] = {
+	    ["XHRKYYO^CN\016\005\005\018\029\026\018\030\018\019\025\025\027\031\026\019\028"] = {
 	    	            rpd = 0,
 	    	            hso = 0,
 	    	            ieae = false,
@@ -57164,125 +57129,105 @@ function SaveManager.init()
 	    	                    _type = "zKXXS",
 	    	                    name = "\027",
 	    	                    hitbox = {
-	    	                        X = -65.91666666666667,
-	    	                        Y = -66.83333333333333,
-	    	                        Z = -66.5
+	    	                        X = -64.33333333333333,
+	    	                        Y = -64.33333333333333,
+	    	                        Z = -64.41666666666667
 	    	                    },
-	    	                    when = -15.25,
+	    	                    when = -24.416666666666664,
+	    	                    ihbc = false
+	    	                },
+	    	                {
+	    	                    _type = "nENMO",
+	    	                    name = "\030",
+	    	                    hitbox = {
+	    	                        X = -64.33333333333333,
+	    	                        Y = -64.33333333333333,
+	    	                        Z = -64.41666666666667
+	    	                    },
+	    	                    when = 96.41666666666666,
+	    	                    ihbc = false
+	    	                },
+	    	                {
+	    	                    _type = "nENMO",
+	    	                    name = "\025",
+	    	                    hitbox = {
+	    	                        X = -64.33333333333333,
+	    	                        Y = -64.33333333333333,
+	    	                        Z = -64.41666666666667
+	    	                    },
+	    	                    when = 64.75,
 	    	                    ihbc = false
 	    	                },
 	    	                {
 	    	                    _type = "zKXXS",
 	    	                    name = "\024",
 	    	                    hitbox = {
-	    	                        X = -65.91666666666667,
-	    	                        Y = -66.83333333333333,
-	    	                        Z = -66.5
+	    	                        X = -64.33333333333333,
+	    	                        Y = -64.33333333333333,
+	    	                        Z = -64.41666666666667
 	    	                    },
-	    	                    when = 32.25,
+	    	                    when = 10.583333333333329,
 	    	                    ihbc = false
 	    	                },
 	    	                {
 	    	                    _type = "zKXXS",
-	    	                    name = "\025",
-	    	                    hitbox = {
-	    	                        X = -65.91666666666667,
-	    	                        Y = -66.83333333333333,
-	    	                        Z = -66.5
-	    	                    },
-	    	                    when = 109.75,
-	    	                    ihbc = false
-	    	                },
-	    	                {
-	    	                    _type = "zKXXS",
-	    	                    name = "\030",
-	    	                    hitbox = {
-	    	                        X = -65.91666666666667,
-	    	                        Y = -66.83333333333333,
-	    	                        Z = -66.5
-	    	                    },
-	    	                    when = 164.75,
-	    	                    ihbc = false
-	    	                },
-	    	                {
-	    	                    _type = "nENMO",
 	    	                    name = "\031",
 	    	                    hitbox = {
-	    	                        X = -65.91666666666667,
-	    	                        Y = -66.83333333333333,
-	    	                        Z = -66.5
+	    	                        X = -64.33333333333333,
+	    	                        Y = -64.33333333333333,
+	    	                        Z = -64.41666666666667
 	    	                    },
-	    	                    when = 259.75,
+	    	                    when = 173.08333333333334,
 	    	                    ihbc = false
-	    	                }
-	    	            },
-	    	            ndfb = false,
-	    	            nbfb = false,
-	    	            _id = "XHRKYYO^CN\016\005\005\027\025\024\030\019\019\028\029\026\027\027\018\026\025\030",
-	    	            mat = 5000,
-	    	            rpue = false,
-	    	            srpn = false,
-	    	            punishable = 0,
-	    	            name = "cIO\010iBKGZCED\010\031\010bC^\010iEGHE",
-	    	            hitbox = {
-	    	                X = -68.58333333333333,
-	    	                Y = -68.58333333333333,
-	    	                Z = -68.58333333333333
-	    	            },
-	    	            fhb = true,
-	    	            imdd = -68.58333333333333,
-	    	            duih = false,
-	    	            rsd = 0,
-	    	            umoa = false,
-	    	            smod = "d\005k",
-	    	            bfht = 0.3,
-	    	            pfh = false,
-	    	            after = 0,
-	    	            imb = false,
-	    	            dp = false,
-	    	            pfht = 0.15,
-	    	            phds = 0,
-	    	            phd = false,
-	    	            aatk = false,
-	    	            nvfb = false,
-	    	            smn = false,
-	    	            iae = false,
-	    	            ha = true,
-	    	            imxd = 14.75,
-	    	            tag = "Undefined",
-	    	            STOP_TRYING_TO_DUMP_TIMINGS_LOL = "You can't unless you reverse Luraph or dynamically dump them <3"
-	    	        },
-	    ["XHRKYYO^CN\016\005\005\027\027\018\018\028\026\025\030\019\026\028\019\025\024\030"] = {
-	    	            rpd = 0,
-	    	            hso = 0,
-	    	            ieae = false,
-	    	            actions = {
+	    	                },
 	    	                {
-	    	                    _type = "`_GZ",
-	    	                    name = "\027",
+	    	                    _type = "zKXXS",
+	    	                    name = "\028",
 	    	                    hitbox = {
-	    	                        X = -60.25,
-	    	                        Y = -60.25,
-	    	                        Z = -60.25
+	    	                        X = -64.33333333333333,
+	    	                        Y = -64.33333333333333,
+	    	                        Z = -64.41666666666667
 	    	                    },
-	    	                    when = 143.91666666666666,
+	    	                    when = 206.41666666666669,
+	    	                    ihbc = false
+	    	                },
+	    	                {
+	    	                    _type = "zKXXS",
+	    	                    name = "\029",
+	    	                    hitbox = {
+	    	                        X = -64.33333333333333,
+	    	                        Y = -64.33333333333333,
+	    	                        Z = -64.41666666666667
+	    	                    },
+	    	                    when = 239.75,
+	    	                    ihbc = false
+	    	                },
+	    	                {
+	    	                    _type = "zKXXS",
+	    	                    name = "\018",
+	    	                    hitbox = {
+	    	                        X = -64.33333333333333,
+	    	                        Y = -64.33333333333333,
+	    	                        Z = -64.41666666666667
+	    	                    },
+	    	                    when = 281.4166666666667,
 	    	                    ihbc = false
 	    	                }
 	    	            },
 	    	            ndfb = false,
 	    	            nbfb = false,
-	    	            _id = "XHRKYYO^CN\016\005\005\027\027\018\018\028\026\025\030\019\026\028\019\025\024\030",
+	    	            _id = "XHRKYYO^CN\016\005\005\018\029\026\018\030\018\019\025\025\027\031\026\019\028",
 	    	            mat = 2000,
 	    	            rpue = false,
 	    	            srpn = false,
 	    	            punishable = 0,
-	    	            name = "cIO\010iBKGZCED\010nKYB\010yFKG",
+	    	            name = "yBEM_DoCMB^bOK\\ODY",
 	    	            hitbox = {
 	    	                X = -68.58333333333333,
 	    	                Y = -68.58333333333333,
 	    	                Z = -68.58333333333333
 	    	            },
-	    	            fhb = true,
+	    	            fhb = false,
 	    	            imdd = -68.58333333333333,
 	    	            duih = false,
 	    	            rsd = 0,
@@ -57301,260 +57246,46 @@ function SaveManager.init()
 	    	            smn = false,
 	    	            iae = false,
 	    	            ha = true,
-	    	            imxd = 14.75,
+	    	            imxd = -58.75,
 	    	            tag = "Undefined",
 	    	            STOP_TRYING_TO_DUMP_TIMINGS_LOL = "You can't unless you reverse Luraph or dynamically dump them <3"
 	    	        },
-	    ["XHRKYYO^CN\016\005\005\027\025\025\029\028\025\027\019\019\030\029\024\027\026\018"] = {
+	    ["XHRKYYO^CN\016\005\005\027\024\019\031\018\018\031\025\027\027\027\026\028\019\030"] = {
 	    	            rpd = 0,
 	    	            hso = 0,
 	    	            ieae = false,
 	    	            actions = {
-	    	                {
-	    	                    _type = "nENMO",
-	    	                    name = "\027",
-	    	                    hitbox = {
-	    	                        X = -65.91666666666667,
-	    	                        Y = -66.83333333333333,
-	    	                        Z = -66.5
-	    	                    },
-	    	                    when = 3.9166666666666714,
-	    	                    ihbc = false
-	    	                },
-	    	                {
-	    	                    _type = "zKXXS",
-	    	                    name = "\024",
-	    	                    hitbox = {
-	    	                        X = -65.91666666666667,
-	    	                        Y = -66.83333333333333,
-	    	                        Z = -66.5
-	    	                    },
-	    	                    when = 58.08333333333333,
-	    	                    ihbc = false
-	    	                },
-	    	                {
-	    	                    _type = "zKXXS",
-	    	                    name = "\025",
-	    	                    hitbox = {
-	    	                        X = -65.91666666666667,
-	    	                        Y = -66.83333333333333,
-	    	                        Z = -66.5
-	    	                    },
-	    	                    when = 106.41666666666666,
-	    	                    ihbc = true
-	    	                },
-	    	                {
-	    	                    _type = "zKXXS",
-	    	                    name = "\030",
-	    	                    hitbox = {
-	    	                        X = -65.91666666666667,
-	    	                        Y = -66.83333333333333,
-	    	                        Z = -66.5
-	    	                    },
-	    	                    when = 198.91666666666669,
-	    	                    ihbc = true
-	    	                }
-	    	            },
-	    	            ndfb = false,
-	    	            nbfb = false,
-	    	            _id = "XHRKYYO^CN\016\005\005\027\025\025\029\028\025\027\019\019\030\029\024\027\026\018",
-	    	            mat = 4000,
-	    	            rpue = false,
-	    	            srpn = false,
-	    	            punishable = 0,
-	    	            name = "cIOiBKGZCEDyZCAO",
-	    	            hitbox = {
-	    	                X = -68.58333333333333,
-	    	                Y = -68.58333333333333,
-	    	                Z = -68.58333333333333
-	    	            },
-	    	            fhb = true,
-	    	            imdd = -68.58333333333333,
-	    	            duih = false,
-	    	            rsd = 0,
-	    	            umoa = false,
-	    	            smod = "d\005k",
-	    	            bfht = 0.3,
-	    	            pfh = false,
-	    	            after = 0,
-	    	            imb = false,
-	    	            dp = false,
-	    	            pfht = 0.15,
-	    	            phds = 0,
-	    	            phd = false,
-	    	            aatk = false,
-	    	            nvfb = false,
-	    	            smn = false,
-	    	            iae = false,
-	    	            ha = true,
-	    	            imxd = 14.75,
-	    	            tag = "Undefined",
-	    	            STOP_TRYING_TO_DUMP_TIMINGS_LOL = "You can't unless you reverse Luraph or dynamically dump them <3"
-	    	        },
-	    ["XHRKYYO^CN\016\005\005\018\026\027\028\019\024\024\028\019\018\028\018\027\018"] = {
-	    	            rpd = 0,
-	    	            hso = 0,
-	    	            ieae = false,
-	    	            actions = {
-	    	                {
-	    	                    _type = "`_GZ",
-	    	                    name = "\027",
-	    	                    hitbox = {
-	    	                        X = -65.91666666666667,
-	    	                        Y = -66.83333333333333,
-	    	                        Z = -66.5
-	    	                    },
-	    	                    when = -21.083333333333336,
-	    	                    ihbc = false
-	    	                },
 	    	                {
 	    	                    _type = "y^KX^\010iXE_IB",
-	    	                    name = "\024",
+	    	                    name = "\027",
 	    	                    hitbox = {
 	    	                        X = -65.91666666666667,
 	    	                        Y = -66.83333333333333,
 	    	                        Z = -66.5
 	    	                    },
-	    	                    when = -3.5833333333333286,
+	    	                    when = -18.583333333333336,
 	    	                    ihbc = false
 	    	                },
 	    	                {
 	    	                    _type = "oDN\010iXE_IB",
-	    	                    name = "\025",
-	    	                    hitbox = {
-	    	                        X = -65.91666666666667,
-	    	                        Y = -66.83333333333333,
-	    	                        Z = -66.5
-	    	                    },
-	    	                    when = 88.08333333333334,
-	    	                    ihbc = false
-	    	                }
-	    	            },
-	    	            ndfb = false,
-	    	            nbfb = false,
-	    	            _id = "XHRKYYO^CN\016\005\005\018\026\027\028\019\024\024\028\019\018\028\018\027\018",
-	    	            mat = 2000,
-	    	            rpue = false,
-	    	            srpn = false,
-	    	            punishable = 0,
-	    	            name = "cIO\010iBKGZCED\010y]OOZ",
-	    	            hitbox = {
-	    	                X = -68.58333333333333,
-	    	                Y = -68.58333333333333,
-	    	                Z = -68.58333333333333
-	    	            },
-	    	            fhb = true,
-	    	            imdd = -68.58333333333333,
-	    	            duih = false,
-	    	            rsd = 0,
-	    	            umoa = false,
-	    	            smod = "d\005k",
-	    	            bfht = 0.3,
-	    	            pfh = false,
-	    	            after = 0,
-	    	            imb = false,
-	    	            dp = false,
-	    	            pfht = 0.15,
-	    	            phds = 0,
-	    	            phd = false,
-	    	            aatk = false,
-	    	            nvfb = false,
-	    	            smn = false,
-	    	            iae = false,
-	    	            ha = true,
-	    	            imxd = 14.75,
-	    	            tag = "Undefined",
-	    	            STOP_TRYING_TO_DUMP_TIMINGS_LOL = "You can't unless you reverse Luraph or dynamically dump them <3"
-	    	        },
-	    ["XHRKYYO^CN\016\005\005\027\025\029\028\024\026\030\029\030\029\031\028\025\028\027"] = {
-	    	            rpd = 0,
-	    	            hso = 0,
-	    	            ieae = false,
-	    	            actions = {
-	    	                {
-	    	                    _type = "nENMO",
-	    	                    name = "\027",
-	    	                    hitbox = {
-	    	                        X = -65.91666666666667,
-	    	                        Y = -66.83333333333333,
-	    	                        Z = -66.5
-	    	                    },
-	    	                    when = -39.41666666666667,
-	    	                    ihbc = false
-	    	                }
-	    	            },
-	    	            ndfb = false,
-	    	            nbfb = false,
-	    	            _id = "XHRKYYO^CN\016\005\005\027\025\029\028\024\026\030\029\030\029\031\028\025\028\027",
-	    	            mat = 2000,
-	    	            rpue = false,
-	    	            srpn = false,
-	    	            punishable = 0,
-	    	            name = "cIO\010iBKGZCED\010~BX_Y^",
-	    	            hitbox = {
-	    	                X = -68.58333333333333,
-	    	                Y = -68.58333333333333,
-	    	                Z = -68.58333333333333
-	    	            },
-	    	            fhb = true,
-	    	            imdd = -68.58333333333333,
-	    	            duih = false,
-	    	            rsd = 0,
-	    	            umoa = false,
-	    	            smod = "d\005k",
-	    	            bfht = 0.3,
-	    	            pfh = false,
-	    	            after = 0,
-	    	            imb = false,
-	    	            dp = false,
-	    	            pfht = 0.15,
-	    	            phds = 0,
-	    	            phd = false,
-	    	            aatk = false,
-	    	            nvfb = false,
-	    	            smn = false,
-	    	            iae = false,
-	    	            ha = true,
-	    	            imxd = 14.75,
-	    	            tag = "Undefined",
-	    	            STOP_TRYING_TO_DUMP_TIMINGS_LOL = "You can't unless you reverse Luraph or dynamically dump them <3"
-	    	        },
-	    ["XHRKYYO^CN\016\005\005\027\026\028\024\028\018\024\028\026\027\027\024\030\019\028"] = {
-	    	            rpd = 0,
-	    	            hso = 0,
-	    	            ieae = false,
-	    	            actions = {
-	    	                {
-	    	                    _type = "y^KX^\010hFEIA",
-	    	                    name = "\027",
-	    	                    hitbox = {
-	    	                        X = -65.91666666666667,
-	    	                        Y = -66.83333333333333,
-	    	                        Z = -66.5
-	    	                    },
-	    	                    when = -26.916666666666664,
-	    	                    ihbc = false
-	    	                },
-	    	                {
-	    	                    _type = "oDN\010hFEIA",
 	    	                    name = "\024",
 	    	                    hitbox = {
-	    	                        X = -65.91666666666667,
-	    	                        Y = -66.83333333333333,
-	    	                        Z = -66.5
+	    	                        X = -43.58333333333333,
+	    	                        Y = -43.58333333333333,
+	    	                        Z = -43.58333333333333
 	    	                    },
-	    	                    when = 98.08333333333334,
+	    	                    when = 14.75,
 	    	                    ihbc = false
 	    	                }
 	    	            },
 	    	            ndfb = false,
 	    	            nbfb = false,
-	    	            _id = "XHRKYYO^CN\016\005\005\027\026\028\024\028\018\024\028\026\027\027\024\030\019\028",
+	    	            _id = "XHRKYYO^CN\016\005\005\027\024\019\031\018\018\031\025\027\027\027\026\028\019\030",
 	    	            mat = 2000,
 	    	            rpue = false,
 	    	            srpn = false,
 	    	            punishable = 0,
-	    	            name = "cIO\010iBKGZCED\010}CDN_Z\010yFKYB",
+	    	            name = "yBEM_DmXOK^iFOK\\O",
 	    	            hitbox = {
 	    	                X = -68.58333333333333,
 	    	                Y = -68.58333333333333,
@@ -57579,7 +57310,7 @@ function SaveManager.init()
 	    	            smn = false,
 	    	            iae = false,
 	    	            ha = true,
-	    	            imxd = 14.75,
+	    	            imxd = -58.75,
 	    	            tag = "Undefined",
 	    	            STOP_TRYING_TO_DUMP_TIMINGS_LOL = "You can't unless you reverse Luraph or dynamically dump them <3"
 	    	        }
@@ -58045,85 +57776,36 @@ function SaveManager.init()
 	    	            tag = "Undefined",
 	    	            STOP_TRYING_TO_DUMP_TIMINGS_LOL = "You can't unless you reverse Luraph or dynamically dump them <3"
 	    	        },
-	    ["mODOXCI~OFOMXKZB"] = {
-	    	            umoa = true,
-	    	            rpd = 0,
-	    	            smod = "mODOXCI~OFOMXKZB",
-	    	            hso = 0,
-	    	            flp = false,
-	    	            ilp = false,
-	    	            ename = "mODOXCI~OFOMXKZB",
-	    	            nbfb = false,
-	    	            bfht = 0.3,
+	    ["xOMOD^y^XCDMmXKZZFO"] = {
+	    	            name = "xOMOD^y^XCDMmXKZZFO",
+	    	            ename = "xOMOD^y^XCDMmXKZZFO",
+	    	            smod = "xOMOD^y^XCDMmXKZZFO",
+	    	            tag = "Undefined",
+	    	            hitbox = {
+	    	                X = -66.5,
+	    	                Y = -66.25,
+	    	                Z = -66.5
+	    	            },
 	    	            actions = {},
-	    	            ndfb = false,
-	    	            rsd = 0,
-	    	            after = 0,
 	    	            duih = false,
-	    	            nvfb = false,
-	    	            rpue = false,
-	    	            srpn = false,
-	    	            aatk = false,
-	    	            hitbox = {
-	    	                X = -68.58333333333333,
-	    	                Y = -68.58333333333333,
-	    	                Z = -68.58333333333333
-	    	            },
-	    	            punishable = 0,
-	    	            name = "mODOXCI~OFOMXKZB",
-	    	            imxd = -68.58333333333333,
-	    	            smn = false,
-	    	            fhb = true,
+	    	            fhb = false,
+	    	            umoa = true,
 	    	            imdd = -68.58333333333333,
-	    	            tag = "Undefined",
-	    	            STOP_TRYING_TO_DUMP_TIMINGS_LOL = "You can't unless you reverse Luraph or dynamically dump them <3"
-	    	        },
-	    ["cIOxCYO"] = {
-	    	            smod = "d\005k",
-	    	            ename = "cIOxCYO",
-	    	            _type = "Parry",
-	    	            name = "cIOxCYO",
-	    	            tag = "Undefined",
-	    	            rpd = 0,
-	    	            hso = 0,
-	    	            bfht = 0.3,
-	    	            when = 400,
-	    	            rsd = 0,
-	    	            after = 0,
-	    	            punishable = 0,
 	    	            imxd = -51.58333333333333,
-	    	            imdd = -68.58333333333333,
-	    	            umoa = false,
+	    	            bfht = 0.3,
+	    	            after = 0,
+	    	            hso = 0,
+	    	            rsd = 0,
+	    	            rpd = 0,
+	    	            punishable = 0,
 	    	            flp = false,
 	    	            ilp = false,
-	    	            ihbc = false,
 	    	            ndfb = false,
-	    	            duih = false,
 	    	            nvfb = false,
 	    	            rpue = false,
 	    	            srpn = false,
 	    	            aatk = false,
 	    	            smn = false,
-	    	            fhb = true,
-	    	            nbfb = nil,
-	    	            actions = {
-	    	                {
-	    	                    _type = "zKXXS",
-	    	                    name = "\027",
-	    	                    when = -39.41666666666667,
-	    	                    ihbc = false,
-	    	                    hitbox = {
-	    	                        X = -66.5,
-	    	                        Y = -66.25,
-	    	                        Z = -66.5
-	    	                    }
-	    	                }
-	    	            },
-	    	            hitbox = {
-	    	                X = -68.58333333333333,
-	    	                Y = -68.58333333333333,
-	    	                Z = -68.58333333333333
-	    	            },
 	    	            STOP_TRYING_TO_DUMP_TIMINGS_LOL = "You can't unless you reverse Luraph or dynamically dump them <3"
 	    	        }
 	}
@@ -62019,7 +61701,7 @@ local ActionContainer = require("Game/Timings/ActionContainer")
 local Timing = {}
 Timing.__index = Timing
 
----Getter for repeat start delay in seconds.
+---Getter for repeat start delay in seconds
 ---@return number
 function Timing:rsd()
 	return ((((self._rsd) + 69) * 12) - 5) / 1000
@@ -63261,7 +62943,7 @@ function TimingContainerPair:list()
 	return timings
 end
 
--- Return TimingContainerPair module.
+-- Return TimingContainerStack module.
 return TimingContainerPair
 
 end)
@@ -65424,7 +65106,7 @@ ValidationOptions.new = LPH_NO_VIRTUALIZE(function(action, timing)
 	return self
 end)
 
--- Return ValidationOptions module.
+-- Return the module.
 return ValidationOptions
 
 end)
@@ -65865,7 +65547,7 @@ local runPlayerScans = LPH_NO_VIRTUALIZE(function()
 	end
 end)
 
----Are there moderators in the server.
+---Are there moderators in the server?
 ---@return table
 function PlayerScanning.hasModerators()
 	for _, scanData in next, PlayerScanning.scanDataCache do
@@ -65879,7 +65561,7 @@ function PlayerScanning.hasModerators()
 	return false
 end
 
----Is a player an ally.
+---Is a player an ally?
 ---@param player Player
 ---@return boolean
 function PlayerScanning.isAlly(player)
@@ -66528,7 +66210,7 @@ local MAX_REPEAT_TIME = 5.0
 local HISTORY_STEPS = 5.0
 local PREDICT_FACING_DELTA = 3
 
----Is animation stopped. Made into a function for de-duplication.
+---Is animation stopped? Made into a function for de-duplication.
 ---@param self AnimatorDefender
 ---@param track AnimationTrack
 ---@param timing AnimationTiming
@@ -66849,35 +66531,25 @@ end)
 ---@param track AnimationTrack
 ---@return boolean
 function AnimatorDefender:pvalidate(track)
-	if Configuration.expectToggleValue("ValidateIncomingAnimations") then
-		if track.Priority == Enum.AnimationPriority.Core then
-			return false
-		end
+	if track.Priority == Enum.AnimationPriority.Core then
+		return false
+	end
 
-		local isComingFromPlayer = players:GetPlayerFromCharacter(self.entity)
+	local isComingFromPlayer = players:GetPlayerFromCharacter(self.entity)
 
-		if isComingFromPlayer and track.WeightTarget <= 0.05 then
-			return false
-		end
+	if isComingFromPlayer and track.WeightTarget <= 0.05 then
+		return false
+	end
 
-		if isComingFromPlayer and self.manimations[track.Animation.AnimationId] ~= nil then
-			Logger.warn(
-				"(%s) Animation %s is being skipped from player %s because they're likely AP breaking.",
-				self.manimations[track.Animation.AnimationId].Name,
-				track.Animation.AnimationId,
-				self.entity.Name
-			)
+	if isComingFromPlayer and self.manimations[track.Animation.AnimationId] ~= nil then
+		Logger.warn(
+			"(%s) Animation %s is being skipped from player %s because they're likely AP breaking.",
+			self.manimations[track.Animation.AnimationId].Name,
+			track.Animation.AnimationId,
+			self.entity.Name
+		)
 
-			return false
-		end
-
-		local aid = tostring(track.Animation.AnimationId)
-
-		-- Block abnormal animation speeds to prevent AP breaker spam.
-		if track.Speed >= 1000 then
-			Logger.warn("(%s) Blocked potential AP breaker from %s (speed: %.0fx)", aid, self.entity.Name, track.Speed)
-			return
-		end
+		return false
 	end
 
 	return true
@@ -66916,6 +66588,12 @@ AnimatorDefender.process = LPH_NO_VIRTUALIZE(function(self, track)
 
 	-- Animation ID.
 	local aid = tostring(track.Animation.AnimationId)
+
+	-- Block abnormal animation speeds to prevent AP breaker spam.
+	if track.Speed >= 1000 then
+		Logger.warn("(%s) Blocked potential AP breaker from %s (speed: %.0fx)", aid, self.entity.Name, track.Speed)
+		return
+	end
 
 	---@type AnimationTiming?
 	local timing = self:initial(self.entity, SaveManager.as, self.entity.Name, aid)
@@ -67185,7 +66863,7 @@ return LPH_NO_VIRTUALIZE(function()
 		)
 	end
 
-	-- Return ControlModule module.
+	-- Return control module.
 	return ControlModule
 end)()
 
@@ -68499,7 +68177,7 @@ return LPH_NO_VIRTUALIZE(function()
 	-- Ownership watcher module.
 	local OwnershipWatcher = { modelsToScan = {}, parts = {} }
 
-	-- Services.
+	-- Services
 	local runService = game:GetService("RunService")
 
 	---@module Utility.Maid
@@ -68725,7 +68403,7 @@ InstanceWrapper.create = LPH_NO_VIRTUALIZE(function(instanceMaid, identifier, ty
 	return newInstance
 end)
 
--- Return InstanceWrapper module.
+-- Return InstanceWrapper module
 return InstanceWrapper
 
 end)
@@ -69727,10 +69405,13 @@ return LPH_NO_VIRTUALIZE(function()
 
 	---Update build stealing.
 	local function updateBuildStealing()
-		local leaderboardMap = LeaderboardClient.gld()
-		if not leaderboardMap then
+		local leaderboardMap, refreshLeaderboard = LeaderboardClient.gld(), LeaderboardClient.glrf()
+		if not leaderboardMap or not refreshLeaderboard then
 			return cameraSubject:restore()
 		end
+
+		-- Refresh leaderboard state.
+		refreshLeaderboard()
 
 		-- Update leaderboard based on state.
 		for player, frame in next, leaderboardMap do
@@ -69753,10 +69434,13 @@ return LPH_NO_VIRTUALIZE(function()
 
 	---Update player list whitelisting.
 	local function updatePlayerListWhitelisting()
-		local leaderboardMap = LeaderboardClient.gld()
-		if not leaderboardMap then
+		local leaderboardMap, refreshLeaderboard = LeaderboardClient.gld(), LeaderboardClient.glrf()
+		if not leaderboardMap or not refreshLeaderboard then
 			return cameraSubject:restore()
 		end
+
+		-- Refresh leaderboard state.
+		refreshLeaderboard()
 
 		-- Update leaderboard based on state.
 		for player, frame in next, leaderboardMap do
@@ -69775,10 +69459,13 @@ return LPH_NO_VIRTUALIZE(function()
 
 	---Update spectating.
 	local function updateSpectating()
-		local leaderboardMap = LeaderboardClient.gld()
-		if not leaderboardMap then
+		local leaderboardMap, refreshLeaderboard = LeaderboardClient.gld(), LeaderboardClient.glrf()
+		if not leaderboardMap or not refreshLeaderboard then
 			return cameraSubject:restore()
 		end
+
+		-- Refresh leaderboard state.
+		refreshLeaderboard()
 
 		-- Update leaderboard based on state.
 		for player, frame in next, leaderboardMap do
@@ -70011,8 +69698,11 @@ function LeaderboardClient.glrf()
 		local upvaluesFunction = upvalues[2]
 
 		-- Cache.
+		cachedUpvaluesFunction = upvaluesFunction
 		lastFunctionCacheTime = os.clock()
-		cachedUpvaluesFunction = function()
+
+		-- Return function.
+		return function()
 			-- Never allow a call when we already have an open one.
 			if LeaderboardClient.calling then
 				return
@@ -70027,9 +69717,6 @@ function LeaderboardClient.glrf()
 			-- Close calling!
 			LeaderboardClient.calling = false
 		end
-
-		-- Return function.
-		return cachedUpvaluesFunction
 	end
 
 	return nil
@@ -70330,7 +70017,7 @@ return LPH_NO_VIRTUALIZE(function()
 		end
 	end
 
-	---Restore no damage bricks.
+	-- Restore no damage bricks.
 	local function restoreNoDamageBricks()
 		damageBricksMap:restore()
 		for _,v in next, game:GetService("CollectionService"):GetTagged("DamageBrick") do
@@ -70672,7 +70359,11 @@ local guiService = game:GetService("GuiService")
 -- Signals.
 local renderStepped = Signal.new(runService.RenderStepped)
 
+-- Nearby players connection.
+local nearbyPlayersConnection = nil
+
 -- Maids.
+
 local visualsMaid = Maid.new()
 local builderAssistanceMaid = Maid.new()
 
@@ -70853,6 +70544,96 @@ local updateSanityTracker = LPH_NO_VIRTUALIZE(function()
 		"Tip_Desc",
 		"The Flicker is a creeping affliction, awarded by the abyss for prolonged exposure to its horrors or a perverse talent for understanding its maddening secrets. This erosion of the mind holds a terrifying value in the afflicted's perception, granting a twisted understanding of the unseen, marking them as touched by powers beyond mortal comprehension."
 	)
+end)
+
+---Update nearby players display.
+local updateNearbyPlayers = LPH_NO_VIRTUALIZE(function()
+	local localPlayer = players.LocalPlayer
+	if not localPlayer then
+		return
+	end
+
+	local playerGui = localPlayer.PlayerGui
+	if not playerGui then
+		return
+	end
+
+	local character = localPlayer.Character
+	if not character then
+		return
+	end
+
+	local humanoidRootPart = character:FindFirstChild("HumanoidRootPart")
+	if not humanoidRootPart then
+		return
+	end
+
+	-- Get or create screen GUI
+	local screenGui = playerGui:FindFirstChild("NearbyPlayersGui")
+	if not screenGui then
+		screenGui = Instance.new("ScreenGui")
+		screenGui.Name = "NearbyPlayersGui"
+		screenGui.ResetOnSpawn = false
+		screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Global
+		screenGui.Parent = playerGui
+		InstanceWrapper.mark(visualsMaid, "NearbyPlayersGui", screenGui)
+	end
+
+	-- Get or create text label
+	local textLabel = screenGui:FindFirstChild("NearbyPlayersLabel")
+	if not textLabel then
+		textLabel = Instance.new("TextLabel")
+		textLabel.Name = "NearbyPlayersLabel"
+		textLabel.Size = UDim2.new(0, 300, 0, 50)
+		textLabel.Position = UDim2.new(0.5, -150, 0, 20)
+		textLabel.BackgroundTransparency = 1
+		textLabel.TextScaled = true
+		textLabel.Font = Enum.Font.GothamBold
+		textLabel.Parent = screenGui
+		
+		-- Add black outline/stroke
+		local stroke = Instance.new("UIStroke")
+		stroke.Color = Color3.new(0, 0, 0)
+		stroke.Thickness = 2
+		stroke.Parent = textLabel
+	end
+
+	-- Update color from configuration
+	textLabel.TextColor3 = Configuration.idOptionValue("ShowNearbyPlayers", "Color") or Color3.new(1, 1, 1)
+
+	-- Find closest player
+	local closestPlayer = nil
+	local closestDistance = math.huge
+
+	for _, player in pairs(players:GetPlayers()) do
+		if player == localPlayer then
+			continue
+		end
+
+		local otherChar = player.Character
+		if not otherChar then
+			continue
+		end
+
+		local otherHRP = otherChar:FindFirstChild("HumanoidRootPart")
+		if not otherHRP then
+			continue
+		end
+
+		local distance = (humanoidRootPart.Position - otherHRP.Position).Magnitude
+		if distance < closestDistance then
+			closestDistance = distance
+			closestPlayer = player
+		end
+	end
+
+	-- Update text
+	if closestPlayer then
+		local displayDistance = math.floor(closestDistance + 0.5) -- Round to nearest stud
+		textLabel.Text = string.format("%s [%d studs]", closestPlayer.Name, displayDistance)
+	else
+		textLabel.Text = "No nearby players"
+	end
 end)
 
 ---On Player GUI descendant added.
@@ -71176,6 +70957,15 @@ local updateTalentSheet = LPH_NO_VIRTUALIZE(function(rframe)
 		return
 	end
 
+	-- Disable UIVanity script while modifying GUI.
+	local playerGui = players.LocalPlayer:FindFirstChild("PlayerGui")
+	local uiVanity = playerGui and playerGui:FindFirstChild("UIVanity")
+	local wasEnabled = uiVanity and uiVanity.Enabled
+
+	if uiVanity then
+		uiVanity.Enabled = false
+	end
+
 	-- Clean maid to re-setup.
 	builderAssistanceMaid:clean()
 
@@ -71303,6 +71093,10 @@ local updateTalentSheet = LPH_NO_VIRTUALIZE(function(rframe)
 		labelMap["Z" .. cleanMantra] = data
 	end
 
+	-- Re-enable UIVanity script.
+	if uiVanity and wasEnabled then
+		uiVanity.Enabled = true
+	end
 end)
 
 ---Update card hovering.
@@ -71752,6 +71546,19 @@ local updateVisuals = LPH_NO_VIRTUALIZE(function()
 		updateSanityTracker()
 	else
 		visualsMaid["SanityTextLabel"] = nil
+	end
+
+	if Configuration.expectToggleValue("ShowNearbyPlayers") then
+		if not nearbyPlayersConnection then
+			nearbyPlayersConnection = renderStepped:connect("Visuals_ShowNearbyPlayers", updateNearbyPlayers)
+			visualsMaid:add(nearbyPlayersConnection)
+		end
+	else
+		if nearbyPlayersConnection then
+			nearbyPlayersConnection:disconnect()
+			nearbyPlayersConnection = nil
+		end
+		visualsMaid["NearbyPlayersGui"] = nil
 	end
 
 	if Configuration.expectToggleValue("BuildAssistance") then
@@ -72930,7 +72737,7 @@ PlayerESP.update = LPH_NO_VIRTUALIZE(function(self)
 		flabel.Position = UDim2.new(0, 2, 0, flabel.TextSize + 2)
 		flabel.TextColor3 = color
 
-		-- Visibility.
+		-- Visibility?
 		fcontainer.Visible = Configuration.idToggleValue(identifier, "ShowHealthComparison") and distance <= 150
 	end
 
@@ -72949,7 +72756,7 @@ PlayerESP.update = LPH_NO_VIRTUALIZE(function(self)
 			continue
 		end
 
-		-- Visibility.
+		-- Visibility?
 		container.Visible = Configuration.idToggleValue(identifier, idx)
 
 		-- Modify size.
@@ -73235,7 +73042,7 @@ EntityESP.cgb = LPH_NO_VIRTUALIZE(function(self, container, seperators, vertical
 	barArea.Size = UDim2.new(1, -2, 1, -2)
 	barArea.ZIndex = 1
 
-	-- Separators only for vertical bars (to match original visual).
+	-- separators only for vertical bars (to match original visual)
 	if seperators then
 		for Idx = 1, 4 do
 			local Separator = Instance.new("Frame")
@@ -74000,7 +73807,7 @@ return LPH_NO_VIRTUALIZE(function()
 	-- Last velocity before breaker modification.
 	local lastVelocity = nil
 
-	-- Last vector.
+	-- Last Vector
 	local lastVector = 1
 
 	---Clean up void mobs.
@@ -74878,7 +74685,7 @@ function InteligenceFarm.detach()
 	Logger.warn("Inteligence Farm detached.")
 end
 
--- Return InteligenceFarm module.
+-- Return InteligenceFarm module
 return InteligenceFarm
 
 end)
@@ -74905,7 +74712,7 @@ return LPH_NO_VIRTUALIZE(function()
 		return true
 	end
 
-	-- Return Attributes module.
+	-- Return AttributeFarm module
 	return Attributes
 end)()
 
@@ -75020,7 +74827,7 @@ function CharismaFarm.detach()
 	Logger.warn("Charisma Farm detached.")
 end
 
--- Return CharismaFarm module.
+-- Return CharismaFarm module
 return CharismaFarm
 
 end)
@@ -75049,6 +74856,9 @@ local AutomationTab = require("Menu/AutomationTab")
 
 ---@module Menu.VisualsTab
 local VisualsTab = require("Menu/VisualsTab")
+
+---@module Menu.BuilderTab
+local BuilderTab = require("Menu/BuilderTab")
 
 ---@module Menu.ExploitTab
 local ExploitTab = require("Menu/ExploitTab")
@@ -75081,8 +74891,8 @@ local renderStepped = Signal.new(runService.RenderStepped)
 local menuMaid = Maid.new()
 
 -- Constants.
-local VERSION = "1.0.9"
-local WATERMARK_TITLE = "Lycoris"
+local VERSION = "1.0.7"
+local WATERMARK_TITLE = "YSL Method"
 Menu.VERSION = VERSION
 
 -- Get game name dynamically.
@@ -75093,10 +74903,10 @@ pcall(function()
 	gameName = productInfo.Name or "Unknown"
 end)
 
-local MENU_TITLE = "Lycoris | " .. gameName
+local MENU_TITLE = "YSL Method | " .. gameName
 
 if LRM_UserNote then
-	MENU_TITLE = string.format("(v%s) Lycoris | %s", VERSION, gameName)
+	MENU_TITLE = string.format("(v%s) YSL Method | %s", VERSION, gameName)
 end
 
 ---Initialize menu.
@@ -75132,6 +74942,7 @@ function Menu.init()
 
 	GameTab.init(window)
 	VisualsTab.init(window)
+	BuilderTab.init(window)
 	AutomationTab.init(window)
 	ExploitTab.init(window)
 	LycorisTab.init(window)
@@ -75183,7 +74994,6 @@ function Menu.init()
 				str = str .. string.format(" | %s", mouse and mouse.Target and mouse.Target:GetFullName() or "N/A")
 			end
 
-			-- Set watermark.
 			Library:SetWatermark(str)
 		end)
 	))
@@ -75392,7 +75202,7 @@ end
 ---Initialize tab.
 function LycorisTab.init(window)
 	-- Create tab.
-	local tab = window:AddTab("Settings") -- Don't change the name, it's more confusing if its named that way.
+	local tab = window:AddTab("Settings") -- dont change the name, it's more confusing if its named that way
 
 	-- Initialize sections.
 	LycorisTab.initCheatSettingsSection(tab:AddLeftGroupbox("Cheat Settings"))
@@ -76441,81 +76251,15 @@ function VisualsTab.initVisualAssistanceSection(groupbox)
 		Default = false,
 	})
 
-	local buildAssistanceToggle = groupbox:AddToggle("BuildAssistance", {
-		Text = "Build Assistance",
-		Tooltip = "Visual assistance for selecting talents, progressing a build, and more.",
+	groupbox:AddToggle("ShowNearbyPlayers", {
+		Text = "Show Nearby Players",
+		Tooltip = "Display the closest nearby player's username and distance on the top of the screen.",
 		Default = false,
+	}):AddColorPicker(Configuration.identify("ShowNearbyPlayers", "Color"), {
+		Default = Color3.new(1, 1, 1),
 	})
 
-	local buildAssistanceDepBox = groupbox:AddDependencyBox()
-
-	local sdoToggle = buildAssistanceDepBox:AddToggle("ShrineDetectionOverride", {
-		Text = "Shrine Detection Override",
-		Tooltip = "Auto-detection for shrine can be wrong especially when it refunds your points. You can use this to override the current state.",
-		Default = true,
-	})
-
-	local sdoDepBox = buildAssistanceDepBox:AddDependencyBox()
-
-	sdoDepBox:AddDropdown("ShrineOverrideState", {
-		Text = "Shrine Override State",
-		Tooltip = "The shrine state to override to.",
-		Default = 1,
-		Values = { "Pre-Shrine", "Post-Shrine", "Must Shrine" },
-	})
-
-	sdoDepBox:SetupDependencies({
-		{ sdoToggle, true },
-	})
-
-	buildAssistanceDepBox:AddInput("BuildAssistanceLink", {
-		Text = "Build Assistance Link",
-		Tooltip = "The builder link that will be used to assist with builds.",
-		Placeholder = "Enter your builder link here.",
-		Finished = true,
-		Callback = function(value)
-			local dresponse = request({
-				Url = "https://deepwoken.co/api/proxy?url=https://api.deepwoken.co/get?type=all",
-				Method = "GET",
-				Headers = { ["Content-Type"] = "application/json" },
-			})
-
-			if not dresponse or not dresponse.Success or not dresponse.Body then
-				return Logger.notify("Invalid response while fetching data response.")
-			end
-
-			local dsuccess, dresult = pcall(JSON.decode, dresponse.Body)
-			if not dsuccess or not dresult then
-				return Logger.notify("JSON error '%s' while deserializing data response.", dresult)
-			end
-
-			Logger.notify("Successfully fetched Deepwoken data.")
-
-			local id = value:gsub("https://deepwoken.co/builder%?id=", ""):gsub(" ", ""):gsub("\n", "")
-			local bresponse = request({
-				Url = ("https://deepwoken.co/api/proxy?url=https://api.deepwoken.co/build?id=%s"):format(id),
-				Method = "GET",
-				Headers = { ["Content-Type"] = "application/json" },
-			})
-
-			if not bresponse or not bresponse.Success or not bresponse.Body then
-				return Logger.notify("Invalid response while fetching builder response.")
-			end
-
-			local bsuccess, bresult = pcall(JSON.decode, bresponse.Body)
-			if not bsuccess or not bresult then
-				return Logger.notify("JSON error '%s' while deserializing builder response.", bresult)
-			end
-
-			Logger.notify("Successfully created BuilderData object.")
-
-			Visuals.bdata = BuilderData.new(bresult, dresult)
-		end,
-	})
-
-	buildAssistanceDepBox:SetupDependencies({
-		{ buildAssistanceToggle, true },
-	})
+	
 end
 
 ---Initialize Visual Removals section.
@@ -76992,7 +76736,7 @@ function BuilderData:ipre(drinfo)
 	return 1
 end
 
----Check if the builder data performed shrine of order at all.
+---Did the builder data even shrine of order at all?
 ---@note: No specific tag, but if they did not shrine of order, then post and pre are the same.
 ---@return boolean
 function BuilderData:dshrine()
@@ -77091,7 +76835,7 @@ __bundle_register("Features/Visuals/Objects/AttributeData", function(require, _L
 local AttributeData = {}
 AttributeData.__index = AttributeData
 
----Check if it is possible to meet the requirements for a specific talent or mantra.
+---Is it possible to meet the requirements for a specific talent or mantra?
 ---@note: Expects the data to be formatted correctly from DeepwokenData
 ---@param reqs table
 ---@return boolean
@@ -77207,7 +76951,7 @@ function AttributeData.new(values)
 	return self
 end
 
--- Return AttributeData module.
+--- Return AttributeData module.
 return AttributeData
 
 end)
@@ -77224,7 +76968,7 @@ function DeepwokenData:get(name)
 	return self.talents[string.lower(name)] or self.mantras[string.lower(name)]
 end
 
----Check if we are able to get a specified talent or mantra with the passed in attribute data.
+---Are we able to get a specified talent or mantra with the passed in attribute data?
 ---@param name string
 ---@param adata AttributeData
 ---@return boolean
@@ -77295,6 +77039,132 @@ end)
 
 
 
+__bundle_register("Menu/BuilderTab", function(require, _LOADED, __bundle_register, __bundle_modules)
+-- BuilderTab module.
+local BuilderTab = {}
+
+---@module Utility.Logger
+local Logger = require("Utility/Logger")
+
+---@module Utility.JSON
+local JSON = require("Utility/JSON")
+
+---@module Features.Visuals.Objects.BuilderData
+local BuilderData = require("Features/Visuals/Objects/BuilderData")
+
+---@module Features.Visuals.Visuals
+local Visuals = require("Features/Visuals/Visuals")
+
+---@module GUI.Library
+local Library = require("GUI/Library")
+
+---Initialize Build Assistance section.
+---@param groupbox table
+function BuilderTab.initBuildAssistanceSection(groupbox)
+	local buildAssistanceToggle = groupbox:AddToggle("BuildAssistance", {
+		Text = "Build Assistance",
+		Tooltip = "Visual assistance for selecting talents, progressing a build, and more.",
+		Default = false,
+	})
+
+	local buildAssistanceDepBox = groupbox:AddDependencyBox()
+
+	local sdoToggle = buildAssistanceDepBox:AddToggle("ShrineDetectionOverride", {
+		Text = "Shrine Detection Override",
+		Tooltip = "Auto-detection for shrine can be wrong especially when it refunds your points. You can use this to override the current state.",
+		Default = true,
+	})
+
+	local sdoDepBox = buildAssistanceDepBox:AddDependencyBox()
+
+	sdoDepBox:AddDropdown("ShrineOverrideState", {
+		Text = "Shrine Override State",
+		Tooltip = "The shrine state to override to.",
+		Default = 1,
+		Values = { "Pre-Shrine", "Post-Shrine", "Must Shrine" },
+	})
+
+	sdoDepBox:SetupDependencies({
+		{ sdoToggle, true },
+	})
+
+	buildAssistanceDepBox:AddInput("BuildAssistanceLink", {
+		Text = "Build Assistance Link",
+		Tooltip = "The builder link that will be used to assist with builds.",
+		Placeholder = "Enter your builder link here.",
+		Finished = true,
+		Callback = function(value)
+			local dresponse = request({
+				Url = "https://deepwoken.co/api/proxy?url=https://api.deepwoken.co/get?type=all",
+				Method = "GET",
+				Headers = { ["Content-Type"] = "application/json" },
+			})
+
+			if not dresponse or not dresponse.Success or not dresponse.Body then
+				return Logger.notify("Invalid response while fetching data response.")
+			end
+
+			local dsuccess, dresult = pcall(JSON.decode, dresponse.Body)
+			if not dsuccess or not dresult then
+				return Logger.notify("JSON error '%s' while deserializing data response.", dresult)
+			end
+
+			Logger.notify("Successfully fetched Deepwoken data.")
+
+			local id = value:gsub("https://deepwoken.co/builder%?id=", ""):gsub(" ", ""):gsub("\n", "")
+			local bresponse = request({
+				Url = ("https://deepwoken.co/api/proxy?url=https://api.deepwoken.co/build?id=%s"):format(id),
+				Method = "GET",
+				Headers = { ["Content-Type"] = "application/json" },
+			})
+
+			if not bresponse or not bresponse.Success or not bresponse.Body then
+				return Logger.notify("Invalid response while fetching builder response.")
+			end
+
+			local bsuccess, bresult = pcall(JSON.decode, bresponse.Body)
+			if not bsuccess or not bresult then
+				return Logger.notify("JSON error '%s' while deserializing builder response.", bresult)
+			end
+
+			Logger.notify("Successfully created BuilderData object.")
+
+			Visuals.bdata = BuilderData.new(bresult, dresult)
+		end,
+	})
+
+	buildAssistanceDepBox:SetupDependencies({
+		{ buildAssistanceToggle, true },
+	})
+end
+
+---Initialize Build Stealer section.
+---@param groupbox table
+function BuilderTab.initBuildStealerSection(groupbox)
+	groupbox:AddToggle("BuildStealer", {
+		Text = "Build Stealer",
+		Tooltip = "Steal builds by hovering on them in the player list and pressing 'P' on your keyboard.",
+		Default = false,
+	})
+end
+
+
+
+---Initialize tab.
+---@param window table
+function BuilderTab.init(window)
+	-- Create tab.
+	local tab = window:AddTab("Builder")
+
+	-- Initialize sections.
+	BuilderTab.initBuildAssistanceSection(tab:AddDynamicGroupbox("Build Assistance"))
+	BuilderTab.initBuildStealerSection(tab:AddDynamicGroupbox("Build Stealer"))
+end
+
+-- Return BuilderTab module.
+return BuilderTab
+
+end)
 __bundle_register("Menu/AutomationTab", function(require, _LOADED, __bundle_register, __bundle_modules)
 -- AutomationTab module.
 local AutomationTab = {}
@@ -77478,16 +77348,124 @@ function AutomationTab.initAutoLootSection(groupbox)
 	})
 end
 
----Initialize Joy Farm section.
+---Initialize Relics Banking section.
 ---@param groupbox table
-function AutomationTab.initJoyFarmSection(groupbox)
-	groupbox:AddButton({
-		Text = "Start Joy Farm",
-		Tooltip = "Make sure that you are at the start of a cycle.",
-		Func = JoyFarm.start,
+function AutomationTab.initRelicsBankingSection(groupbox)
+	local relics = { "Smith's Alloy", "Gilded Needle", "Moonseye Tome", "Sinner's Ash", "Armorer's Needle", "Idol of Yun'Shul", "Forged Needle" }
+	
+	local relicDropdown = groupbox:AddDropdown("RelicToBankDropdown", {
+		Text = "Select Relic",
+		Values = relics,
+		Default = 1,
 	})
+	
+	local autoBankToggle = groupbox:AddToggle("AutoBankRelic", {
+		Text = "Auto Bank Relic",
+		Default = false,
+		Callback = function(value)
+			if not value then
+				Logger.longNotify("Stopped banking")
+				return
+			end
+			
+			local r = Options.RelicToBankDropdown and Options.RelicToBankDropdown.Value
+			if not r then
+				Logger.longNotify("No relic selected")
+				return
+			end
+			
+			local relic = relics[r]
+			if not relic then
+				Logger.longNotify("Invalid relic selection")
+				return
+			end
+			
+			local p = game:GetService("Players").LocalPlayer
+			local rem = p.PlayerGui:WaitForChild("BankGui"):WaitForChild("Choice")
+			
+			task.spawn(function()
+				while Toggles.AutoBankRelic.Value do
+					local t = p.Backpack:FindFirstChild(relic)
+					if t then
+						rem:FireServer("deposit", t)
+						local yesPrompt = p.PlayerGui:FindFirstChild("DialogChoice")
+						if yesPrompt then
+							local yesButton = yesPrompt:FindFirstChild("Yes")
+							if yesButton then
+								yesButton:FindFirstChildOfClass("TextButton"):FireSignal("Activated")
+							end
+						end
+					end
+					task.wait(1)
+				end
+			end)
+			Logger.longNotify("Started banking: " .. relic)
+		end,
+	})
+end
 
-	groupbox:AddButton("Stop Joy Farm", JoyFarm.stop)
+---Initialize Relics Withdrawal section.
+---@param groupbox table
+function AutomationTab.initRelicWithdrawalSection(groupbox)
+	local RELIC_IDS = {
+		["Smith's Alloy"] = "SmithsAlloy",
+		["Gilded Needle"] = "GildedNeedle",
+		["Moonseye Tome"] = "MoonseyeTome",
+		["Sinner's Ash"] = "SinnersAsh",
+		["Armorer's Needle"] = "ArmourersNeedle",
+		["Idol of Yun'Shul"] = "IdolOfYunShul",
+		["Forged Needle"] = "ForgedNeedle",
+	}
+	
+	local relics = { "Smith's Alloy", "Gilded Needle", "Moonseye Tome", "Sinner's Ash", "Armorer's Needle", "Idol of Yun'Shul", "Forged Needle" }
+	
+	local relicDropdown = groupbox:AddDropdown("RelicToWithdrawDropdown", {
+		Text = "Select Relic",
+		Values = relics,
+		Default = 1,
+	})
+	
+	local autoWithdrawToggle = groupbox:AddToggle("AutoWithdrawRelic", {
+		Text = "Auto Withdraw Relic",
+		Default = false,
+		Callback = function(value)
+			if not value then
+				Logger.longNotify("Stopped withdrawing")
+				return
+			end
+			
+			local r = Options.RelicToWithdrawDropdown and Options.RelicToWithdrawDropdown.Value
+			if not r then
+				Logger.longNotify("No relic selected")
+				return
+			end
+
+			local relic = (type(r) == "number") and relics[r] or r
+			local rid = RELIC_IDS[relic]
+			if not relic or not rid then
+				Logger.longNotify("Invalid relic selection")
+				return
+			end
+			
+			local p = game:GetService("Players").LocalPlayer
+			local bk = p.PlayerGui:WaitForChild("BankGui"):WaitForChild("Choice")
+			
+			task.spawn(function()
+				while Toggles.AutoWithdrawRelic.Value do
+					bk:FireServer("withdraw", rid)
+					local pr = p.PlayerGui:FindFirstChild("DialogChoice")
+					if pr then
+						local y = pr:FindFirstChild("Yes")
+						if y then
+							y:FindFirstChildOfClass("TextButton"):FireSignal("Activated")
+						end
+					end
+					task.wait(1)
+				end
+			end)
+			Logger.longNotify("Started withdrawing: " .. relic)
+		end,
+	})
 end
 
 ---Initialize Effect Automation section.
@@ -77499,6 +77477,10 @@ function AutomationTab.initEffectAutomation(groupbox)
 		Default = false,
 	})
 end
+
+
+
+
 
 ---Initialize Debugging section.
 ---@param groupbox table
@@ -77544,6 +77526,17 @@ function AutomationTab.initDebuggingSection(groupbox)
 		unblockRemote:FireServer()
 	end)
 
+		function Library:SetWatermarkVisibility(Bool)
+		-- Force watermark to remain visible for testing regardless of requests.
+		Library.Watermark.Visible = true
+	end
+
+	function Library:SetWatermark(Text)
+		local X, Y = Library:GetTextBounds(Text, Library.Font, 14)
+		Library.WatermarkText.Text = Text
+		Library.Watermark.Size = UDim2.new(0, X + 15, 0, (Y * 1.5) + 3)
+	end
+
 	groupbox:AddButton("Test Tween", function()
 		local positions = {
 			CFrame.new(2414.70, 442.28, -5595.58),
@@ -77576,12 +77569,10 @@ function AutomationTab.init(window)
 	-- Initialize sections.
 	AutomationTab.initFishFarmSection(tab:AddDynamicGroupbox("Fish Farm"))
 	AutomationTab.initAttributeSection(tab:AddDynamicGroupbox("Attribute Farm"))
+	AutomationTab.initRelicsBankingSection(tab:AddDynamicGroupbox("Banking"))
+	AutomationTab.initRelicWithdrawalSection(tab:AddDynamicGroupbox("Withdrawal"))
 	AutomationTab.initEffectAutomation(tab:AddDynamicGroupbox("Effect Automation"))
 	AutomationTab.initAutoLootSection(tab:AddLeftGroupbox("Auto Loot"))
-
-	if game.PlaceId == 8668476218 then
-		AutomationTab.initJoyFarmSection(tab:AddLeftGroupbox("Joy Farm"))
-	end
 
 	if LRM_UserNote then
 		return
@@ -78033,12 +78024,6 @@ function GameTab.initPlayerMonitoringSection(groupbox)
 		Default = false,
 	})
 
-	groupbox:AddToggle("BuildStealer", {
-		Text = "Build Stealer",
-		Tooltip = "Steal builds by hovering on them in the player list and pressing 'P' on your keyboard.",
-		Default = false,
-	})
-
 	groupbox:AddToggle("ShowHiddenPlayers", {
 		Text = "Show Hidden Players",
 		Tooltip = "Show hidden players on the player list.",
@@ -78383,7 +78368,7 @@ local Library = require("GUI/Library")
 ---@module Game.Timings.SaveManager
 local SaveManager = require("Game/Timings/SaveManager")
 
----Initialize combat targeting section.
+-- Initialize combat targeting section.
 ---@param tab table
 function CombatTab.initCombatTargetingSection(tab)
 	tab:AddDropdown("PlayerSelectionType", {
@@ -78444,7 +78429,7 @@ function CombatTab.initCombatTargetingSection(tab)
 	})
 end
 
----Initialize combat whitelist section.
+-- Initialize combat whitelist section.
 ---@param groupbox table
 function CombatTab.initCombatWhitelistSection(groupbox)
 	groupbox:AddToggle("PlayerListWhitelisting", {
@@ -78501,7 +78486,7 @@ function CombatTab.initCombatWhitelistSection(groupbox)
 	end)
 end
 
----Initialize auto defense section.
+-- Initialize auto defense section.
 ---@param groupbox table
 function CombatTab.initAutoDefenseSection(groupbox)
 	local autoDefenseToggle = groupbox:AddToggle("EnableAutoDefense", {
@@ -78549,13 +78534,7 @@ function CombatTab.initAutoDefenseSection(groupbox)
 		Default = false,
 		Tooltip = "If enabled, the auto defense will ignore parry, block and dodge action if there's already an existing invincibility frame.",
 	})
-
-	autoDefenseDepBox:AddToggle("ValidateIncomingAnimations", {
-		Text = "Validate Incoming Animations",
-		Default = true,
-		Tooltip = "If enabled, the auto defense will check the incoming attack's animation for any abnormalities to prevent AP breaking.",
-	})
-
+	
 	autoDefenseDepBox:AddToggle("ParryOnly", {
 		Text = "Parry Dodgeables",
 		Default = false,
@@ -79273,8 +79252,8 @@ local handleFlowState = LPH_NO_VIRTUALIZE(function(type)
 		flowStateRemote:FireServer()
 	end
 
-	-- If we've done an aerial attack (aerial cooldown effect).
-	-- If we've attacked also (light attack effect).
+	-- If we've done an aerial attack -- (aerial cooldown effect)
+	-- If we've attacked also -- (light attack effect)
 	if
 		effectReplicatorModule:FindEffect("AerialCD")
 		and effectReplicatorModule:FindEffect("LightAttack")
@@ -79549,7 +79528,7 @@ local replicateGesture = LPH_NO_VIRTUALIZE(function(gestureName)
 		task.wait()
 	until humanoid.MoveDirection.Magnitude > 0
 
-	-- Wait a bit.
+	-- Wait a bit...
 	task.wait(0.5)
 
 	-- Remove effects.
@@ -80063,7 +80042,7 @@ function Hooking.init()
 		banRemotes[request] = true
 	end
 
-	-- Did we execute with a standalone AC bypass.
+	-- Did we execute with a standalone AC bypass?
 	local nulledBanRemotes = {}
 
 	for _, instance in next, getnilinstances() do
