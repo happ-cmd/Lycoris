@@ -1,0 +1,69 @@
+{
+  "patch_id": "custom-icerise-001",
+  "timestamp": "2025-10-05T14:00:00.000000",
+  "author": "your_name",
+  "description": "Custom IceRise timing adjustments",
+  "diff": {
+    "animation": {
+      "rbxassetid://132792155877270": {
+        "status": "modified",
+        "changes": {
+          "name": "IceRise Attack 1",
+          "actions": {
+            "from": [],
+            "to": [
+              {
+                "_type": "Parry",
+                "name": "1",
+                "hitbox": {
+                  "X": 14,
+                  "Y": 14,
+                  "Z": 16
+                },
+                "when": 600,
+                "ihbc": false
+              },
+              {
+                "_type": "Parry",
+                "name": "2",
+                "hitbox": {
+                  "X": 12,
+                  "Y": 12,
+                  "Z": 14
+                },
+                "when": 900,
+                "ihbc": false
+              }
+            ]
+          },
+          "punishable": 0.5,
+          "after": 1.0
+        }
+      },
+      "rbxassetid://132792155877271": {
+        "status": "modified",
+        "changes": {
+          "name": "IceRise Attack 2",
+          "actions": {
+            "from": [],
+            "to": [
+              {
+                "_type": "Parry",
+                "name": "1",
+                "hitbox": {
+                  "X": 16,
+                  "Y": 16,
+                  "Z": 18
+                },
+                "when": 450,
+                "ihbc": false
+              }
+            ]
+          },
+          "punishable": 0.4,
+          "after": 0.8
+        }
+      }
+    }
+  }
+}
