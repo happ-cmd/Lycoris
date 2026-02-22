@@ -578,15 +578,6 @@ local updateTalentSheet = LPH_NO_VIRTUALIZE(function(rframe)
 		return
 	end
 
-	-- Disable UIVanity script while modifying GUI.
-	local playerGui = players.LocalPlayer:FindFirstChild("PlayerGui")
-	local uiVanity = playerGui and playerGui:FindFirstChild("UIVanity")
-	local wasEnabled = uiVanity and uiVanity.Enabled
-
-	if uiVanity then
-		uiVanity.Enabled = false
-	end
-
 	-- Clean maid to re-setup.
 	builderAssistanceMaid:clean()
 
@@ -714,10 +705,6 @@ local updateTalentSheet = LPH_NO_VIRTUALIZE(function(rframe)
 		labelMap["Z" .. cleanMantra] = data
 	end
 
-	-- Re-enable UIVanity script.
-	if uiVanity and wasEnabled then
-		uiVanity.Enabled = true
-	end
 end)
 
 ---Update card hovering.
