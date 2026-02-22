@@ -69405,13 +69405,10 @@ return LPH_NO_VIRTUALIZE(function()
 
 	---Update build stealing.
 	local function updateBuildStealing()
-		local leaderboardMap, refreshLeaderboard = LeaderboardClient.gld(), LeaderboardClient.glrf()
-		if not leaderboardMap or not refreshLeaderboard then
+		local leaderboardMap = LeaderboardClient.gld()
+		if not leaderboardMap then
 			return cameraSubject:restore()
 		end
-
-		-- Refresh leaderboard state.
-		refreshLeaderboard()
 
 		-- Update leaderboard based on state.
 		for player, frame in next, leaderboardMap do
@@ -69434,13 +69431,11 @@ return LPH_NO_VIRTUALIZE(function()
 
 	---Update player list whitelisting.
 	local function updatePlayerListWhitelisting()
-		local leaderboardMap, refreshLeaderboard = LeaderboardClient.gld(), LeaderboardClient.glrf()
-		if not leaderboardMap or not refreshLeaderboard then
+local leaderboardMap = LeaderboardClient.gld()
+		if not leaderboardMap then
 			return cameraSubject:restore()
 		end
 
-		-- Refresh leaderboard state.
-		refreshLeaderboard()
 
 		-- Update leaderboard based on state.
 		for player, frame in next, leaderboardMap do
@@ -69459,13 +69454,11 @@ return LPH_NO_VIRTUALIZE(function()
 
 	---Update spectating.
 	local function updateSpectating()
-		local leaderboardMap, refreshLeaderboard = LeaderboardClient.gld(), LeaderboardClient.glrf()
-		if not leaderboardMap or not refreshLeaderboard then
+		local leaderboardMap = LeaderboardClient.gld()
+		if not leaderboardMap then
 			return cameraSubject:restore()
 		end
 
-		-- Refresh leaderboard state.
-		refreshLeaderboard()
 
 		-- Update leaderboard based on state.
 		for player, frame in next, leaderboardMap do
@@ -69698,11 +69691,8 @@ function LeaderboardClient.glrf()
 		local upvaluesFunction = upvalues[2]
 
 		-- Cache.
-		cachedUpvaluesFunction = upvaluesFunction
 		lastFunctionCacheTime = os.clock()
-
-		-- Return function.
-		return function()
+		cachedUpvaluesFunction = function()
 			-- Never allow a call when we already have an open one.
 			if LeaderboardClient.calling then
 				return
@@ -69717,6 +69707,9 @@ function LeaderboardClient.glrf()
 			-- Close calling!
 			LeaderboardClient.calling = false
 		end
+
+		-- Return function.
+		return cachedUpvaluesFunction
 	end
 
 	return nil
@@ -70957,15 +70950,6 @@ local updateTalentSheet = LPH_NO_VIRTUALIZE(function(rframe)
 		return
 	end
 
-	-- Disable UIVanity script while modifying GUI.
-	local playerGui = players.LocalPlayer:FindFirstChild("PlayerGui")
-	local uiVanity = playerGui and playerGui:FindFirstChild("UIVanity")
-	local wasEnabled = uiVanity and uiVanity.Enabled
-
-	if uiVanity then
-		uiVanity.Enabled = false
-	end
-
 	-- Clean maid to re-setup.
 	builderAssistanceMaid:clean()
 
@@ -71091,11 +71075,6 @@ local updateTalentSheet = LPH_NO_VIRTUALIZE(function(rframe)
 		newFrame.Parent = talentScroll
 
 		labelMap["Z" .. cleanMantra] = data
-	end
-
-	-- Re-enable UIVanity script.
-	if uiVanity and wasEnabled then
-		uiVanity.Enabled = true
 	end
 end)
 
