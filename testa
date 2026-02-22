@@ -61415,6 +61415,21 @@ function SaveManager.init()
 
 	end
 
+	-- Track newest patch loaded.
+	local newestPatchTime = "No patches loaded"
+	local patchLoadSuccess = false
+	
+	-- Check if config timings were loaded (indicating patches exist).
+	local configCount = config:count()
+	if configCount > 0 then
+		-- Patches were loaded successfully.
+		patchLoadSuccess = true
+		newestPatchTime = os.date("!%Y-%m-%d %H:%M:%S", os.time())
+		Logger.notify("[Timings] Newest patch loaded successfully at %s | Total config timings: %i", newestPatchTime, configCount)
+	else
+		Logger.warn("[Timings] No config patches loaded. Using internal timings only.")
+	end
+
 	-- Animation stack.
 	SaveManager.as = TimingContainerPair.new(internalAnimationContainer, config:get().animation)
 
