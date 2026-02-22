@@ -489,27 +489,25 @@ end
 
 ---Detach instance.
 function Lycoris.detach()
-	local function safe_call(fn, ...)
-		if type(fn) == "function" then
-			pcall(fn, ...)
-		end
-	end
+	lycorisMaid:clean()
 
-	pcall(function()
-		if lycorisMaid and lycorisMaid.clean then
-			lycorisMaid:clean()
-		end
-	end)
+	ModuleManager.detach()
 
-	safe_call(ModuleManager and ModuleManager.detach)
-	safe_call(Menu and Menu.detach)
-	safe_call(QueuedBlocking and QueuedBlocking.detach)
-	safe_call(ControlModule and ControlModule.detach)
-	safe_call(Features and Features.detach)
-	safe_call(SaveManager and SaveManager.detach)
-	safe_call(PlayerScanning and PlayerScanning.detach)
-	safe_call(CoreGuiManager and CoreGuiManager.clear)
-	safe_call(StateListener and StateListener.detach)
+	Menu.detach()
+
+	QueuedBlocking.detach()
+
+	ControlModule.detach()
+
+	Features.detach()
+
+	SaveManager.detach()
+
+	PlayerScanning.detach()
+
+	CoreGuiManager.clear()
+
+	StateListener.detach()
 
 	local modules = replicatedStorage:FindFirstChild("Modules")
 	local bloxstrapRPC = modules and modules:FindFirstChild("BloxstrapRPC")
