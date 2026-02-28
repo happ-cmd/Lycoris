@@ -423,6 +423,39 @@ function Lycoris.init()
 
 	UpdateNotifier.check(Menu.VERSION)
 
+	-- Initialize Event Timer update loop
+	local lastEventUpdate = 0
+	local EventTimer = require("Utility/EventTimer")
+	local cachedElements = {frame = nil, label = nil, countdown = nil}
+	
+	-- Store references to update cache when elements are created
+	_G.EventTimerElementCache = cachedElements
+	
+	game:GetService("RunService").RenderStepped:Connect(function()
+		-- Try to cache elements if not already cached
+		if not cachedElements.frame and _G.EventTimerElements then
+			cachedElements.frame = _G.EventTimerElements.frame
+			cachedElements.label = _G.EventTimerElements.label
+			cachedElements.countdown = _G.EventTimerElements.countdown
+		end
+		
+		if not cachedElements.frame or not cachedElements.label or not cachedElements.countdown then
+			return
+		end
+		
+		local currentTime = tick()
+		if currentTime - lastEventUpdate < 1 then
+			return
+		end
+		lastEventUpdate = currentTime
+
+		local eventName, secondsUntil, eventTime = EventTimer.getNextEvent()
+		local countdown = EventTimer.formatCountdown(secondsUntil)
+
+		cachedElements.label.Text = eventName .. " @ " .. eventTime
+		cachedElements.countdown.Text = "Starts in: " .. countdown
+	end)
+
 	PlayerScanning.init()
 
 	StateListener.init()
@@ -4403,6 +4436,112 @@ return LPH_NO_VIRTUALIZE(function()
 		Library.Watermark = WatermarkOuter
 		Library.WatermarkText = WatermarkLabel
 		Library:MakeDraggable(Library.Watermark)
+
+		-- Event Timer GUI
+		local EventTimerOuter = Library:Create("Frame", {
+			BorderColor3 = Color3.new(0, 0, 0),
+			Position = UDim2.new(0, 100, 0, 60),
+			Size = UDim2.new(0, 250, 0, 60),
+			ZIndex = 200,
+			Visible = false,
+			Parent = ScreenGui,
+		})
+
+		local EventTimerInner = Library:Create("Frame", {
+			BackgroundColor3 = Library.MainColor,
+			BorderColor3 = Library.OutlineColor,
+			BorderMode = Enum.BorderMode.Inset,
+			Size = UDim2.new(1, 0, 1, 0),
+			ZIndex = 201,
+			Parent = EventTimerOuter,
+		})
+
+		Library:AddToRegistry(EventTimerInner, {
+			BackgroundColor3 = "MainColor",
+			BorderColor3 = "OutlineColor",
+		}, true)
+
+		local EventColorFrame = Library:Create("Frame", {
+			BackgroundColor3 = Library.AccentColor,
+			BorderSizePixel = 0,
+			Size = UDim2.new(1, 0, 0, 2),
+			ZIndex = 204,
+			Parent = EventTimerInner,
+		})
+
+		Library:AddToRegistry(EventColorFrame, {
+			BackgroundColor3 = "AccentColor",
+		}, true)
+
+		local InnerFrameEvent = Library:Create("Frame", {
+			BackgroundColor3 = Color3.new(1, 1, 1),
+			BorderSizePixel = 0,
+			Position = UDim2.new(0, 1, 0, 1),
+			Size = UDim2.new(1, -2, 1, -2),
+			ZIndex = 202,
+			Parent = EventTimerInner,
+		})
+
+		local GradientEvent = Library:Create("UIGradient", {
+			Color = ColorSequence.new({
+				ColorSequenceKeypoint.new(0, Library:GetDarkerColor(Library.MainColor)),
+				ColorSequenceKeypoint.new(1, Library.MainColor),
+			}),
+			Rotation = -90,
+			Parent = InnerFrameEvent,
+		})
+
+		Library:AddToRegistry(GradientEvent, {
+			Color = function()
+				return ColorSequence.new({
+					ColorSequenceKeypoint.new(0, Library:GetDarkerColor(Library.MainColor)),
+					ColorSequenceKeypoint.new(1, Library.MainColor),
+				})
+			end,
+		})
+
+		local EventTimerLabel = Library:CreateLabel({
+			Position = UDim2.new(0, 5, 0, 1),
+			Size = UDim2.new(1, -4, 0.5, -2),
+			TextColor3 = Library.AccentColor,
+			TextSize = 12,
+			TextXAlignment = Enum.TextXAlignment.Left,
+			Text = "Event Timer",
+			ZIndex = 203,
+			Parent = InnerFrameEvent,
+		})
+
+		Library:AddToRegistry(EventTimerLabel, {
+			TextColor3 = "AccentColor",
+		}, true)
+
+		local EventCountdownLabel = Library:CreateLabel({
+			Position = UDim2.new(0, 5, 0.5, 1),
+			Size = UDim2.new(1, -4, 0.5, -2),
+			TextColor3 = Library.AccentColor,
+			TextSize = 11,
+			TextXAlignment = Enum.TextXAlignment.Left,
+			Text = "Calculating...",
+			ZIndex = 203,
+			Parent = InnerFrameEvent,
+		})
+
+		Library:AddToRegistry(EventCountdownLabel, {
+			TextColor3 = "AccentColor",
+		}, true)
+
+		Library.EventTimerFrame = EventTimerOuter
+		Library.EventTimerLabel = EventTimerLabel
+		Library.EventCountdownLabel = EventCountdownLabel
+		
+		-- Store in global so RenderStepped loop can access them
+		_G.EventTimerElements = {
+			frame = EventTimerOuter,
+			label = EventTimerLabel,
+			countdown = EventCountdownLabel
+		}
+		
+		Library:MakeDraggable(Library.EventTimerFrame)
 
 		local InfoLoggerOuter = Library:Create("Frame", {
 			BorderColor3 = Color3.new(0, 0, 0),
@@ -70167,17 +70306,17 @@ return LPH_NO_VIRTUALIZE(function()
 			rawset(effect, "Value", 0)
 		end
 
-		if effect.Class == "Burning" and Configuration.expectToggleValue("AutoExtinguishFire") then
-			local serverSlide = KeyHandling.getRemote("ServerSlide")
-			local serverSlideStop = KeyHandling.getRemote("ServerSlideStop")
-
-			if not serverSlide or not serverSlideStop then
-				return Logger.warn("ServerSlide or ServerSlideStop not found.")
-			end
-
-			serverSlide:FireServer(true)
-			serverSlideStop:FireServer()
-		end
+		-- if effect.Class == "Burning" and Configuration.expectToggleValue("AutoExtinguishFire") then
+		--	local serverSlide = KeyHandling.getRemote("ServerSlide")
+		--	local serverSlideStop = KeyHandling.getRemote("ServerSlideStop")
+--
+		--	if not serverSlide or not serverSlideStop then
+		--		return Logger.warn("ServerSlide or ServerSlideStop not found.")
+		--	end
+--
+		--	serverSlide:FireServer(true)
+		--	serverSlideStop:FireServer()
+		--end
 	end
 
 	---On workspace descendant added.
@@ -70327,7 +70466,7 @@ local Logger = require("Utility/Logger")
 ---@module Features.Visuals.Objects.ObeliskESP
 local ObeliskESP = require("Features/Visuals/Objects/ObeliskESP")
 
----@module Features.Visuals.Objects.BoneAltarESP
+-----@module Features.Visuals.Objects.BoneAltarESP
 local BoneAltarESP = require("Features/Visuals/Objects/BoneAltarESP")
 
 ---@module Features.Combat.StateListener
@@ -71630,9 +71769,9 @@ end)
 local onThrownChildAdded = LPH_NO_VIRTUALIZE(function(child)
 	local name = child.Name
 
-	if name == "MinistryCacheIndicator" then
-		return emplaceObject(child, PartESP.new("MinistryCacheIndicator", child, "Ministry Cache Indicator"))
-	end
+	-- if name == "MinistryCacheIndicator" then
+	--	return emplaceObject(child, PartESP.new("MinistryCacheIndicator", child, "Ministry Cache Indicator"))
+	--end
 
 	if name == "BigArtifact" and child:IsA("Model") then
 		return emplaceObject(child, ModelESP.new("Artifact", child, "Artifact"))
@@ -71642,9 +71781,9 @@ local onThrownChildAdded = LPH_NO_VIRTUALIZE(function(child)
 		return emplaceObject(child, ModelESP.new("BellMeteor", child, "Bell Meteor"))
 	end
 
-	if name == "ExplodeCrate" then
-		return emplaceObject(child, PartESP.new("ExplosiveBarrel", child, "Explosive Barrel"))
-	end
+	-- if name == "ExplodeCrate" then
+	--	return emplaceObject(child, PartESP.new("ExplosiveBarrel", child, "Explosive Barrel"))
+	--end
 
 	if name == "BagDrop" then
 		return emplaceObject(child, PartESP.new("BagDrop", child, "Bag"))
@@ -71654,9 +71793,9 @@ local onThrownChildAdded = LPH_NO_VIRTUALIZE(function(child)
 		return emplaceObject(child, PartESP.new("OwlFeathers", child, "Owl Feathers"))
 	end
 
-	if name == "BoneSpear" then
-		return emplaceObject(child, PartESP.new("BoneSpear", child, "Bone Spear"))
-	end
+	-- if name == "BoneSpear" then
+	--	return emplaceObject(child, PartESP.new("BoneSpear", child, "Bone Spear"))
+	--end
 
 	visualsMaid:mark(TaskSpawner.spawn("Visuals_ChestCheck", function()
 		if child.Name == "Chest" and child:GetAttribute("LootName") ~= nil then
@@ -71682,11 +71821,11 @@ local onShopChildAdded = LPH_NO_VIRTUALIZE(function(child)
 		return
 	end
 
-	if child:IsA("Model") then
-		return emplaceObject(child, ModelESP.new("ShopESP", child, name))
-	end
+	-- if child:IsA("Model") then
+	--	return emplaceObject(child, ModelESP.new("ShopESP", child, name))
+	--end
 
-	return emplaceObject(child, PartESP.new("ShopESP", child, name))
+	-- return emplaceObject(child, PartESP.new("ShopESP", child, name))
 end)
 
 ---Create listener.
@@ -71733,7 +71872,7 @@ local onAvatarRoomDescendantAdded = LPH_NO_VIRTUALIZE(function(descendant)
 		return
 	end
 
-	return emplaceObject(descendant, BoneAltarESP.new("BoneAltar", descendant, "Bone Altar"))
+	-- return emplaceObject(descendant, BoneAltarESP.new("BoneAltar", descendant, "Bone Altar"))
 end)
 
 ---On Workspace ChildAdded.
@@ -71749,23 +71888,23 @@ onWorkspaceChildAdded = LPH_NO_VIRTUALIZE(function(child)
 		return createListener(child, "TrueAvatarBossRoom", onAvatarRoomDescendantAdded, onInstanceRemoving, false)
 	end
 
-	if name == "BellKeys" then
-		for _, descendant in next, child:GetDescendants() do
-			if not descendant:IsA("BasePart") then
-				continue
-			end
+	-- if name == "BellKeys" then
+	--	for _, descendant in next, child:GetDescendants() do
+	--		if not descendant:IsA("BasePart") then
+	--			continue
+	--		end
+--
+	--		if descendant.Name ~= "BellKey" then
+	--			continue
+	--		end
+--
+	--		return emplaceObject(descendant, PartESP.new("BellKey", descendant, "Bell Key"))
+	--	end
+	--end
 
-			if descendant.Name ~= "BellKey" then
-				continue
-			end
-
-			return emplaceObject(descendant, PartESP.new("BellKey", descendant, "Bell Key"))
-		end
-	end
-
-	if name == "JobBoard" then
-		return emplaceObject(child, ModelESP.new("JobBoard", child, "Job Board"))
-	end
+	-- if name == "JobBoard" then
+	--	return emplaceObject(child, ModelESP.new("JobBoard", child, "Job Board"))
+	--end
 
 	if name == "BigArtifact" and child:IsA("Model") then
 		return emplaceObject(child, ModelESP.new("Artifact", child, "Artifact"))
@@ -71783,60 +71922,60 @@ onWorkspaceChildAdded = LPH_NO_VIRTUALIZE(function(child)
 		return emplaceObject(child, PartESP.new("BagDrop", child, "Sack"))
 	end
 
-	if name == "MinistryCacheIndicator" then
-		return emplaceObject(child, PartESP.new("MinistryCacheIndicator", child, "Ministry Cache Indicator"))
-	end
+	-- if name == "MinistryCacheIndicator" then
+	--	return emplaceObject(child, PartESP.new("MinistryCacheIndicator", child, "Ministry Cache Indicator"))
+	--end
 
 	if name:match("GuildDoor") then
 		local doorName = child:GetAttribute("GuildName") or "Unidentified Guild Door"
 		return emplaceObject(child, PartESP.new("GuildDoor", child, doorName))
 	end
 
-	if name == "GuildBanner" then
-		return emplaceObject(child, ModelESP.new("GuildBanner", child, "Guild Banner"))
-	end
+	-- if name == "GuildBanner" then
+	--	return emplaceObject(child, ModelESP.new("GuildBanner", child, "Guild Banner"))
+	--end
 
-	if name == "Obelisk" then
-		return emplaceObject(child, ObeliskESP.new("Obelisk", child, "Obelisk"))
-	end
+	-- if name == "Obelisk" then
+	--	return emplaceObject(child, ObeliskESP.new("Obelisk", child, "Obelisk"))
+	--end
 
-	if name:match("ArmorBrick") then
-		local billboardGui = child:FindFirstChild("BillboardGui")
-		local armorBrickLabel = billboardGui and billboardGui:FindFirstChild("TextLabel")
-		local armorBrickName = armorBrickLabel and armorBrickLabel.Text
+	-- if name:match("ArmorBrick") then
+	--	local billboardGui = child:FindFirstChild("BillboardGui")
+	--	local armorBrickLabel = billboardGui and billboardGui:FindFirstChild("TextLabel")
+	--	local armorBrickName = armorBrickLabel and armorBrickLabel.Text
+--
+	--	if not armorBrickLabel then
+	--		armorBrickName = "Unknown Armor Brick"
+	--	end
+--
+	--	return emplaceObject(child, PartESP.new("ArmorBrick", child, armorBrickName))
+	--end
 
-		if not armorBrickLabel then
-			armorBrickName = "Unknown Armor Brick"
-		end
+	-- if name == "RareObelisk" then
+	--	return emplaceObject(child, ModelESP.new("RareObelisk", child, "Rare Obelisk"))
+	--end
 
-		return emplaceObject(child, PartESP.new("ArmorBrick", child, armorBrickName))
-	end
+	-- if name == "HealBrick" then
+	--	return emplaceObject(child, PartESP.new("HealBrick", child, "Heal Brick"))
+	--end
 
-	if name == "RareObelisk" then
-		return emplaceObject(child, ModelESP.new("RareObelisk", child, "Rare Obelisk"))
-	end
+	-- if name == "MantraObelisk" then
+	--	return emplaceObject(child, ModelESP.new("MantraObelisk", child, "Mantra Obelisk"))
+	--end
 
-	if name == "HealBrick" then
-		return emplaceObject(child, PartESP.new("HealBrick", child, "Heal Brick"))
-	end
+	-- if name:match("Boundary") then
+	--	return emplaceObject(child, PartESP.new("VOIBoundaryESP", child, child.Name))
+	--end
 
-	if name == "MantraObelisk" then
-		return emplaceObject(child, ModelESP.new("MantraObelisk", child, "Mantra Obelisk"))
-	end
+	-- if child:GetAttribute("Rarity") and child:IsA("MeshPart") then
+	--	return emplaceObject(child, PartESP.new("VOIWeaponESP", child, child.Name))
+	--end
 
-	if name:match("Boundary") then
-		return emplaceObject(child, PartESP.new("VOIBoundaryESP", child, child.Name))
-	end
-
-	if child:GetAttribute("Rarity") and child:IsA("MeshPart") then
-		return emplaceObject(child, PartESP.new("VOIWeaponESP", child, child.Name))
-	end
-
-	visualsMaid:mark(TaskSpawner.spawn("Visuals_BRWeaponCheck", function()
-		if child:IsA("MeshPart") and child:WaitForChild("InteractPrompt", 0.1) and not name:match("Barrel") then
-			return emplaceObject(child, PartESP.new("BRWeapon", child, name))
-		end
-	end))
+	-- visualsMaid:mark(TaskSpawner.spawn("Visuals_BRWeaponCheck", function()
+	--	if child:IsA("MeshPart") and child:WaitForChild("InteractPrompt", 0.1) and not name:match("Barrel") then
+	--		return emplaceObject(child, PartESP.new("BRWeapon", child, name))
+	--	end
+	--end))
 end)
 
 ---On terrain added.
@@ -71904,6 +72043,7 @@ function Visuals.init()
 	createListener(shops, "Shops", onShopChildAdded, onInstanceRemoving, true)
 
 	---@note: We only need to get this once.
+	--[[
 	for _, descendant in next, replicatedStorage:WaitForChild("MarkerWorkspace"):GetDescendants() do
 		if descendant.Name ~= "AreaMarker" then
 			continue
@@ -71912,6 +72052,7 @@ function Visuals.init()
 		local areaMarkerName = descendant.Parent.Name or "Unidentified Area Marker"
 		emplaceObject(descendant, FilteredESP.new(PartESP.new("AreaMarker", descendant, areaMarkerName)))
 	end
+	]]
 
 	local localPlayer = players.LocalPlayer
 	local playerGui = localPlayer:WaitForChild("PlayerGui")
@@ -73338,6 +73479,28 @@ EntityESP.update = LPH_NO_VIRTUALIZE(function(self, tags)
 		self:useperators(distance)
 	end
 
+	-- Update poison bar if it exists (for MobESP)
+	local pbar = self.pbar
+	local poisonBar = pbar and self.gb(pbar)
+
+	if pbar and poisonBar and self.lastPoisonValue ~= nil then
+		-- Get poison value - use stored value if available
+		local poisonValue = self.lastPoisonValue
+		
+		-- Assume max poison is 100 for percentage calculation
+		local maxPoison = 100
+		local percent = math.clamp(poisonValue / maxPoison, 0.0, 1.0)
+		
+		local fullColor = Configuration.idOptionValue(identifier, "PoisonFullColor") or Color3.new(0.5, 1, 0)
+		local emptyColor = Configuration.idOptionValue(identifier, "PoisonEmptyColor") or Color3.new(0.2, 0.5, 0)
+
+		-- Update sizing.
+		self.mbs(pbar, true, percent)
+
+		-- Update color.
+		poisonBar.BackgroundColor3 = emptyColor:Lerp(fullColor, percent)
+	end
+
 	-- Build layout.
 	self:build()
 
@@ -73671,6 +73834,7 @@ MobESP.__type = "MobESP"
 
 -- Formats.
 local ESP_HEALTH = "[%i/%i]"
+local ESP_BLOOD_POISON = "[Poison %i]"
 
 ---Update MobESP.
 ---@param self MobESP
@@ -73680,7 +73844,59 @@ MobESP.update = LPH_NO_VIRTUALIZE(function(self)
 		return self:visible(false)
 	end
 
-	EntityESP.update(self, { ESP_HEALTH:format(humanoid.Health, humanoid.MaxHealth) })
+	local tags = { ESP_HEALTH:format(humanoid.Health, humanoid.MaxHealth) }
+
+	local bloodPoisonValue = 0
+	if Configuration.expectToggleValue("ShowMobBloodPoison") or Configuration.idToggleValue("Mob", "PoisonBar") then
+		-- Try to find BloodPoison as a direct child first
+		local bloodPoison = self.entity:FindFirstChild("BloodPoison")
+		
+		-- If not found as direct child, search recursively
+		if not bloodPoison then
+			bloodPoison = self.entity:FindFirstDescendant("BloodPoison")
+		end
+		
+		-- If found and it's a value object, read it
+		if bloodPoison and (bloodPoison:IsA("IntValue") or bloodPoison:IsA("NumberValue")) then
+			bloodPoisonValue = math.floor(bloodPoison.Value)
+		elseif bloodPoison then
+			-- If it's something else, try to convert it
+			local value = bloodPoison.Value
+			if value then
+				bloodPoisonValue = math.floor(tonumber(value) or 0)
+			end
+		else
+			-- Try to find it as an attribute on the character
+			local attr = self.entity:GetAttribute("BloodPoison")
+			if attr then
+				bloodPoisonValue = math.floor(tonumber(attr) or 0)
+			else
+				-- Try to find it as an attribute on the humanoid
+				local humanoidAttr = humanoid:GetAttribute("BloodPoison")
+				if humanoidAttr then
+					bloodPoisonValue = math.floor(tonumber(humanoidAttr) or 0)
+				end
+			end
+		end
+	end
+
+	if Configuration.expectToggleValue("ShowMobBloodPoison") then
+		table.insert(tags, ESP_BLOOD_POISON:format(bloodPoisonValue))
+	end
+
+	-- Store poison value for bar updating
+	self.lastPoisonValue = bloodPoisonValue
+
+	EntityESP.update(self, tags)
+end)
+
+---Add extra elements (poison bar).
+MobESP.extra = LPH_NO_VIRTUALIZE(function(self)
+	if Configuration.idToggleValue("Mob", "PoisonBar") then
+		self.pbar = self:add("PoisonBar", "left", 6, function(container)
+			self:cgb(container, true, true, Color3.new(0.5, 1, 0))
+		end)
+	end
 end)
 
 ---Create new MobESP object.
@@ -74273,18 +74489,27 @@ return LPH_NO_VIRTUALIZE(function()
 			rootPart.HelioFlight:Destroy()
 		end
 
-		local flyBodyVelocity = InstanceWrapper.create(movementMaid, "flyBodyVelocity", "BodyVelocity", rootPart)
-		flyBodyVelocity.MaxForce = Vector3.new(9e9, 9e9, 9e9)
+		-- compute desired velocity based on movement input and camera orientation
+		local moveVec = ControlModule.getMoveVector()
+		if not moveVec then
+			return
+		end
 
 		local flyVelocity = camera.CFrame:VectorToWorldSpace(
-			ControlModule.getMoveVector() * Configuration.expectOptionValue("FlySpeed")
+			moveVec * Configuration.expectOptionValue("FlySpeed")
 		)
 
 		if userInputService:IsKeyDown(Enum.KeyCode.Space) then
 			flyVelocity = flyVelocity + Vector3.new(0, Configuration.expectOptionValue("FlyUpSpeed"), 0)
 		end
 
-		flyBodyVelocity.Velocity = flyVelocity
+		-- clamp magnitude to avoid extreme values that may crash physics
+		local maxMag = 1000
+		if flyVelocity.Magnitude > maxMag then
+			flyVelocity = flyVelocity.Unit * maxMag
+		end
+
+		rootPart.AssemblyLinearVelocity = flyVelocity
 	end
 
 	---Update max momentum spoofer.
@@ -75174,6 +75399,64 @@ function LycorisTab.initUISettingsSection(groupbox)
 		Text = "Watermark",
 		Callback = function(Value)
 			Library:SetWatermarkVisibility(Value)
+		end,
+	})
+
+	local EventTimer = require("Utility/EventTimer")
+	local timezones = {
+		"NA Central (CST)",
+		"NA East (EST)",
+		"NA Mountain (MST)",
+		"NA Pacific (PST)",
+		"AU (AEDT)",
+		"EU (GMT)",
+		"JP (JST)",
+	}
+
+	local eventTimerLabel = groupbox:AddLabel("Event Timer")
+
+	eventTimerLabel:AddKeyPicker("EventTimer", {
+		Default = "N/A",
+		Mode = "Off",
+		NoUI = true,
+		Text = "Event Timer",
+		Callback = function(Value)
+			if Library.EventTimerFrame then
+				Library.EventTimerFrame.Visible = Value
+				if Value then
+					-- refresh immediately when toggled via keybind
+					local eventName, secondsUntil, eventTime = EventTimer.getNextEvent()
+					local countdown = EventTimer.formatCountdown(secondsUntil)
+					Library.EventTimerLabel.Text = eventName .. " @ " .. eventTime
+					Library.EventCountdownLabel.Text = "Starts in: " .. countdown
+				end
+			end
+		end,
+	})
+
+	groupbox:AddToggle("ShowEventTimer", {
+		Text = "Show Event Timer",
+		Default = false,
+		Callback = function(Value)
+			if Library.EventTimerFrame then
+				Library.EventTimerFrame.Visible = Value
+				if Value then
+					-- immediately update labels when shown
+					local eventName, secondsUntil, eventTime = EventTimer.getNextEvent()
+					local countdown = EventTimer.formatCountdown(secondsUntil)
+					Library.EventTimerLabel.Text = eventName .. " @ " .. eventTime
+					Library.EventCountdownLabel.Text = "Starts in: " .. countdown
+				end
+			end
+		end,
+	})
+	groupbox:AddDropdown("EventTimerTimezone", {
+		Text = "Event Timer Timezone",
+		Values = timezones,
+		Default = 2,
+		Multi = false,
+		Callback = function(Value)
+			EventTimer.setTimezone(timezones[Value])
 		end,
 	})
 end
@@ -76352,11 +76635,7 @@ end
 ---@param depbox table
 ---@return string, table
 function VisualsTab.addBoneAltarESP(identifier, depbox)
-	depbox:AddToggle(Configuration.identify(identifier, "HideIfBoneInside"), {
-		Text = "Hide If Bone Inside",
-		Default = false,
-	})
-
+	-- stubbed out; bone altar ESP removed
 	return identifier, depbox
 end
 
@@ -76378,6 +76657,21 @@ function VisualsTab.addEntityESP(identifier, depbox)
 		Default = Color3.new(1, 0, 0),
 	})
 
+	if identifier == "Mob" then
+		local pbToggle = depbox:AddToggle(Configuration.identify(identifier, "PoisonBar"), {
+			Text = "Show Poison Bar",
+			Default = false,
+		})
+
+		pbToggle:AddColorPicker(Configuration.identify(identifier, "PoisonFullColor"), {
+			Default = Color3.new(0.5, 1, 0),
+		})
+
+		pbToggle:AddColorPicker(Configuration.identify(identifier, "PoisonEmptyColor"), {
+			Default = Color3.new(0.2, 0.5, 0),
+		})
+	end
+
 	depbox:AddToggle(Configuration.identify(identifier, "BoundingBox"), {
 		Text = "Show Bounding Box",
 		Default = false,
@@ -76387,6 +76681,13 @@ function VisualsTab.addEntityESP(identifier, depbox)
 		Text = "Show Health Changes",
 		Default = false,
 	})
+
+	if identifier == "Mob" then
+		depbox:AddToggle("ShowMobBloodPoison", {
+			Text = "Show Blood Poison",
+			Default = false,
+		})
+	end
 
 	return identifier, depbox
 end
@@ -76606,30 +76907,17 @@ function VisualsTab.init(window)
 	VisualsTab.initBaseESPSection("NPC", tab:AddDynamicGroupbox("NPC ESP"))
 	VisualsTab.addChestESP(VisualsTab.initBaseESPSection("Chest", tab:AddDynamicGroupbox("Chest ESP")))
 	VisualsTab.initBaseESPSection("BagDrop", tab:AddDynamicGroupbox("Bag ESP"))
-	VisualsTab.addFilterESP(VisualsTab.initBaseESPSection("AreaMarker", tab:AddDynamicGroupbox("Area Marker ESP")))
-	VisualsTab.initBaseESPSection("VOIBoundaryESP", tab:AddDynamicGroupbox("VOI Boundary ESP"))
-	VisualsTab.initBaseESPSection("VOIWeaponESP", tab:AddDynamicGroupbox("VOI Weapon ESP"))
-	VisualsTab.initBaseESPSection("ShopESP", tab:AddDynamicGroupbox("Shop ESP"))
-	VisualsTab.initBaseESPSection("JobBoard", tab:AddDynamicGroupbox("Job Board ESP"))
+	-- VisualsTab.addFilterESP(VisualsTab.initBaseESPSection("AreaMarker", tab:AddDynamicGroupbox("Area Marker ESP")))
+	-- VisualsTab.initBaseESPSection("VOIWeaponESP", tab:AddDynamicGroupbox("VOI Weapon ESP"))
+	-- VisualsTab.initBaseESPSection("JobBoard", tab:AddDynamicGroupbox("Job Board ESP"))
 	VisualsTab.initBaseESPSection("Artifact", tab:AddDynamicGroupbox("Artifact ESP"))
 	VisualsTab.initBaseESPSection("WindrunnerOrb", tab:AddDynamicGroupbox("Windrunner Orb ESP"))
 	VisualsTab.initBaseESPSection("Whirlpool", tab:AddDynamicGroupbox("Whirlpool ESP"))
-	VisualsTab.initBaseESPSection("ExplosiveBarrel", tab:AddDynamicGroupbox("Explosive Barrel ESP"))
-	VisualsTab.initBaseESPSection("MinistryCacheIndicator", tab:AddDynamicGroupbox("Ministry Cache ESP"))
 	VisualsTab.initBaseESPSection("OwlFeathers", tab:AddDynamicGroupbox("Owl Feathers ESP"))
 	VisualsTab.initBaseESPSection("GuildDoor", tab:AddDynamicGroupbox("Guild Door ESP"))
-	VisualsTab.initBaseESPSection("GuildBanner", tab:AddDynamicGroupbox("Guild Banner ESP"))
-	VisualsTab.addObeliskESP(VisualsTab.initBaseESPSection("Obelisk", tab:AddDynamicGroupbox("Obelisk ESP")))
-	VisualsTab.addBoneAltarESP(VisualsTab.initBaseESPSection("BoneAltar", tab:AddDynamicGroupbox("Bone Altar ESP")))
+	-- VisualsTab.addObeliskESP(VisualsTab.initBaseESPSection("Obelisk", tab:AddDynamicGroupbox("Obelisk ESP")))
 	VisualsTab.addFilterESP(VisualsTab.initBaseESPSection("Ingredient", tab:AddDynamicGroupbox("Ingredient ESP")))
-	VisualsTab.initBaseESPSection("BoneSpear", tab:AddDynamicGroupbox("Bone Spear ESP"))
-	VisualsTab.initBaseESPSection("ArmorBrick", tab:AddDynamicGroupbox("Armor Brick ESP"))
 	VisualsTab.initBaseESPSection("BellMeteor", tab:AddDynamicGroupbox("Bell Meteor ESP"))
-	VisualsTab.initBaseESPSection("RareObelisk", tab:AddDynamicGroupbox("Rare Obelisk ESP"))
-	VisualsTab.initBaseESPSection("HealBrick", tab:AddDynamicGroupbox("Heal Brick ESP"))
-	VisualsTab.initBaseESPSection("MantraObelisk", tab:AddDynamicGroupbox("Mantra Obelisk ESP"))
-	VisualsTab.initBaseESPSection("BRWeapon", tab:AddDynamicGroupbox("BR Weapon ESP"))
-	VisualsTab.initBaseESPSection("BellKey", tab:AddDynamicGroupbox("Bell Key ESP"))
 end
 
 -- Return VisualsTab module.
@@ -77330,131 +77618,34 @@ end
 ---Initialize Relics Banking section.
 ---@param groupbox table
 function AutomationTab.initRelicsBankingSection(groupbox)
-	local relics = { "Smith's Alloy", "Gilded Needle", "Moonseye Tome", "Sinner's Ash", "Armorer's Needle", "Idol of Yun'Shul", "Forged Needle" }
-	
-	local relicDropdown = groupbox:AddDropdown("RelicToBankDropdown", {
-		Text = "Select Relic",
-		Values = relics,
-		Default = 1,
-	})
-	
-	local autoBankToggle = groupbox:AddToggle("AutoBankRelic", {
-		Text = "Auto Bank Relic",
-		Default = false,
-		Callback = function(value)
-			if not value then
-				Logger.longNotify("Stopped banking")
-				return
-			end
-			
-			local r = Options.RelicToBankDropdown and Options.RelicToBankDropdown.Value
-			if not r then
-				Logger.longNotify("No relic selected")
-				return
-			end
-			
-			local relic = relics[r]
-			if not relic then
-				Logger.longNotify("Invalid relic selection")
-				return
-			end
-			
-			local p = game:GetService("Players").LocalPlayer
-			local rem = p.PlayerGui:WaitForChild("BankGui"):WaitForChild("Choice")
-			
-			task.spawn(function()
-				while Toggles.AutoBankRelic.Value do
-					local t = p.Backpack:FindFirstChild(relic)
-					if t then
-						rem:FireServer("deposit", t)
-						local yesPrompt = p.PlayerGui:FindFirstChild("DialogChoice")
-						if yesPrompt then
-							local yesButton = yesPrompt:FindFirstChild("Yes")
-							if yesButton then
-								yesButton:FindFirstChildOfClass("TextButton"):FireSignal("Activated")
-							end
-						end
-					end
-					task.wait(1)
-				end
-			end)
-			Logger.longNotify("Started banking: " .. relic)
-		end,
-	})
+	-- disabled per user request; leaving stub to avoid initialization errors
 end
 
 ---Initialize Relics Withdrawal section.
 ---@param groupbox table
 function AutomationTab.initRelicWithdrawalSection(groupbox)
-	local RELIC_IDS = {
-		["Smith's Alloy"] = "SmithsAlloy",
-		["Gilded Needle"] = "GildedNeedle",
-		["Moonseye Tome"] = "MoonseyeTome",
-		["Sinner's Ash"] = "SinnersAsh",
-		["Armorer's Needle"] = "ArmourersNeedle",
-		["Idol of Yun'Shul"] = "IdolOfYunShul",
-		["Forged Needle"] = "ForgedNeedle",
-	}
-	
-	local relics = { "Smith's Alloy", "Gilded Needle", "Moonseye Tome", "Sinner's Ash", "Armorer's Needle", "Idol of Yun'Shul", "Forged Needle" }
-	
-	local relicDropdown = groupbox:AddDropdown("RelicToWithdrawDropdown", {
-		Text = "Select Relic",
-		Values = relics,
-		Default = 1,
-	})
-	
-	local autoWithdrawToggle = groupbox:AddToggle("AutoWithdrawRelic", {
-		Text = "Auto Withdraw Relic",
-		Default = false,
-		Callback = function(value)
-			if not value then
-				Logger.longNotify("Stopped withdrawing")
-				return
-			end
-			
-			local r = Options.RelicToWithdrawDropdown and Options.RelicToWithdrawDropdown.Value
-			if not r then
-				Logger.longNotify("No relic selected")
-				return
-			end
-
-			local relic = (type(r) == "number") and relics[r] or r
-			local rid = RELIC_IDS[relic]
-			if not relic or not rid then
-				Logger.longNotify("Invalid relic selection")
-				return
-			end
-			
-			local p = game:GetService("Players").LocalPlayer
-			local bk = p.PlayerGui:WaitForChild("BankGui"):WaitForChild("Choice")
-			
-			task.spawn(function()
-				while Toggles.AutoWithdrawRelic.Value do
-					bk:FireServer("withdraw", rid)
-					local pr = p.PlayerGui:FindFirstChild("DialogChoice")
-					if pr then
-						local y = pr:FindFirstChild("Yes")
-						if y then
-							y:FindFirstChildOfClass("TextButton"):FireSignal("Activated")
-						end
-					end
-					task.wait(1)
-				end
-			end)
-			Logger.longNotify("Started withdrawing: " .. relic)
-		end,
-	})
+	-- disabled per user request; leaving stub to avoid initialization errors
 end
 
 ---Initialize Effect Automation section.
 ---@param groupbox table
 function AutomationTab.initEffectAutomation(groupbox)
-	groupbox:AddToggle("AutoExtinguishFire", {
-		Text = "Auto Extinguish Fire",
-		Tooltip = "Attempt to remove 'Burning' effects through automatic sliding.",
+	-- auto log toggle
+	local autoLogToggle = groupbox:AddToggle("AutoLog", {
+		Text = "Auto Log",
+		Tooltip = "Return to menu when toggled or keybind pressed.",
 		Default = false,
+		Callback = function(state)
+			if state then
+				local remote = game:GetService("ReplicatedStorage"):WaitForChild("Requests"):WaitForChild("ReturnToMenu")
+				if remote then
+					remote:FireServer()
+				end
+				autoLogToggle:Set(false)
+			end
+		end,
 	})
+	autoLogToggle:AddKeyPicker("AutoLogKeybind", { Default = "N/A", SyncToggleState = true, Text = "Auto Log" })
 end
 
 
@@ -77507,7 +77698,7 @@ function AutomationTab.initDebuggingSection(groupbox)
 
 		function Library:SetWatermarkVisibility(Bool)
 		-- Force watermark to remain visible for testing regardless of requests.
-		Library.Watermark.Visible = true
+		Library.Watermark.Visible = false
 	end
 
 	function Library:SetWatermark(Text)
@@ -77548,8 +77739,8 @@ function AutomationTab.init(window)
 	-- Initialize sections.
 	AutomationTab.initFishFarmSection(tab:AddDynamicGroupbox("Fish Farm"))
 	AutomationTab.initAttributeSection(tab:AddDynamicGroupbox("Attribute Farm"))
-	AutomationTab.initRelicsBankingSection(tab:AddDynamicGroupbox("Banking"))
-	AutomationTab.initRelicWithdrawalSection(tab:AddDynamicGroupbox("Withdrawal"))
+	--AutomationTab.initRelicsBankingSection(tab:AddDynamicGroupbox("Banking"))
+	--AutomationTab.initRelicWithdrawalSection(tab:AddDynamicGroupbox("Withdrawal"))
 	AutomationTab.initEffectAutomation(tab:AddDynamicGroupbox("Effect Automation"))
 	AutomationTab.initAutoLootSection(tab:AddLeftGroupbox("Auto Loot"))
 
@@ -77663,6 +77854,7 @@ function GameTab.initLocalCharacterSection(groupbox)
 
 	noclipToggle:AddKeyPicker("NoClipKeybind", { Default = "N/A", SyncToggleState = true, Text = "NoClip" })
 
+
 	local noclipDepBox = groupbox:AddDependencyBox()
 
 	noclipDepBox:AddToggle("NoClipCollisionsKnocked", {
@@ -77763,6 +77955,9 @@ function GameTab.initLocalCharacterSection(groupbox)
 		Rounding = 0,
 	})
 
+	-- Auto sprint feature removed per request
+
+	--[[
 	groupbox:AddToggle("AutoSprint", {
 		Text = "Auto Sprint",
 		Tooltip = "Instantly invoke a sprint when pressing a key in any direction.",
@@ -77793,6 +77988,7 @@ function GameTab.initLocalCharacterSection(groupbox)
 		Suffix = "s",
 		Rounding = 2,
 	})
+	]]
 
 	groupbox:AddToggle("FreestylersBandSpoof", {
 		Text = "Freestylers Band Spoofer",
@@ -77862,13 +78058,7 @@ function GameTab.initLocalCharacterSection(groupbox)
 		{ Toggles.AgilitySpoof, true },
 	})
 
-	asdDepBox:SetupDependencies({
-		{ Toggles.AutoSprintDelay, true },
-	})
-
-	asDepBox:SetupDependencies({
-		{ Toggles.AutoSprint, true },
-	})
+	-- sprint dependency boxes removed earlier, no setup required
 
 	infiniteJumpDepBox:SetupDependencies({
 		{ Toggles.InfiniteJump, true },
@@ -79570,66 +79760,8 @@ end)
 ---On tick.
 ---@return any
 local onTick = LPH_NO_VIRTUALIZE(function(...)
-	if checkcaller() then
-		return oldTick(...)
-	end
-
-	if not Configuration.expectToggleValue("AutoSprint") then
-		return oldTick(...)
-	end
-
-	local level, info = findInputClientLevel()
-	if not level or not info then
-		return oldTick(...)
-	end
-
-	local stack = findInputClientStack()
-	if not stack then
-		return error("Stack is nil.")
-	end
-
-	local firstConstantSuccess, firstConstant = pcall(debug.getconstant, info.func, 1)
-	if not firstConstantSuccess then
-		return oldTick(...)
-	end
-
-	if firstConstant ~= "UserInputType" then
-		return oldTick(...)
-	end
-
-	---@note: Filter for any other spots that might be using tick() through the stack.
-	if
-		not table.find(stack, "W")
-		and not table.find(stack, "A")
-		and not table.find(stack, "S")
-		and not table.find(stack, "D")
-	then
-		return oldTick(...)
-	end
-
-	---@note: We can indeed set a delay in here. The active thread is InputClient.
-	if Configuration.expectToggleValue("AutoSprintDelay") then
-		task.wait(Configuration.expectOptionValue("AutoSprintDelayTime"))
-	end
-
-	local effectReplicator = replicatedStorage:FindFirstChild("EffectReplicator")
-	if not effectReplicator then
-		return
-	end
-
-	local effectReplicatorModule = require(effectReplicator)
-	if not effectReplicatorModule then
-		return
-	end
-
-	if
-		not Configuration.expectToggleValue("AutoSprintOnCrouch") and effectReplicatorModule:HasEffect("ClientCrouch")
-	then
-		return oldTick(...)
-	end
-
-	---@note: Set the timestamp set by sprinting to -math.huge so it's always over 0.25s.
-	return -math.huge
+	-- auto sprint logic removed, simply call original tick
+	return oldTick(...)
 end)
 
 ---On index.
@@ -80121,5 +80253,176 @@ end
 -- Return Hooking module.
 return Hooking
 
+end)
+__bundle_register("Utility/EventTimer", function(require, _LOADED, __bundle_register, __bundle_modules)
+-- Event Timer module for world events countdown.
+local EventTimer = {}
+
+-- Timezone offset configurations (UTC offset in hours)
+-- NA East is UTC-5 (Eastern Time) - this is the base
+local TIMEZONES = {
+	["NA East (EST)"] = 0,      -- UTC-5
+	["NA Central (CST)"] = 1,   -- UTC-6 (1 hour behind EST)
+	["NA Mountain (MST)"] = 2,  -- UTC-7
+	["NA Pacific (PST)"] = 3,   -- UTC-8
+	["EU (GMT)"] = 5,           -- UTC+0 (5 hours ahead of EST)
+	["JP (JST)"] = 14,          -- UTC+9
+	["AU (AEDT)"] = 15,         -- UTC+11
+}
+
+-- Default timezone - NA East
+EventTimer.currentTimezone = "NA East (EST)"
+
+-- Event times in 24-hour format (minutes from midnight) - NA EAST BASE
+local EVENTS_NA_EAST = {
+	BattleRoyale = {60, 150, 240, 330, 420, 510, 600, 690, 780, 870, 960, 1050, 1140, 1230, 1320},
+	InterluminaryParasol = {120, 210, 300, 390, 480, 570, 660, 750, 840, 930, 1020, 1110, 1200, 1290, 1380, 1470},
+	CarnivalOfHearts = {90, 180, 270, 360, 450, 540, 630, 720, 810, 900, 990, 1080, 1170, 1260, 1350, 1440}
+}
+
+---Convert event times to a specific timezone
+---@param baseMinutes number - minutes from midnight in NA East
+---@param timezoneOffset number - hours to offset
+---@return number - adjusted minutes
+local function convertToTimezone(baseMinutes, timezoneOffset)
+	-- Convert to minutes offset
+	local minuteOffset = timezoneOffset * 60
+	local adjustedMinutes = (baseMinutes + minuteOffset) % 1440
+	
+	-- Handle negative wraparound
+	if adjustedMinutes < 0 then
+		adjustedMinutes = adjustedMinutes + 1440
+	end
+	
+	return adjustedMinutes
+end
+
+---Get events for current timezone
+---@return table
+local function getEventsForTimezone()
+	local offset = TIMEZONES[EventTimer.currentTimezone] or 0
+	
+	if offset == 0 then
+		return EVENTS_NA_EAST
+	end
+	
+	-- Convert all events
+	local converted = {}
+	for eventName, times in pairs(EVENTS_NA_EAST) do
+		converted[eventName] = {}
+		for _, minute in ipairs(times) do
+			table.insert(converted[eventName], convertToTimezone(minute, offset))
+		end
+		table.sort(converted[eventName])
+	end
+	
+	return converted
+end
+
+---Convert event times from minutes to readable format
+local function minutesToTime(minutes)
+	local hours = math.floor(minutes / 60)
+	local mins = minutes % 60
+	local period = hours >= 12 and "PM" or "AM"
+	if hours > 12 then
+		hours = hours - 12
+	elseif hours == 0 then
+		hours = 12
+	end
+	return string.format("%d:%02d %s", hours, mins, period)
+end
+
+---Get the next event countdown
+---@return string eventName, number secondsUntil, string eventTime
+function EventTimer.getNextEvent()
+	local now = os.time()
+	local date = os.date("*t", now)
+	local currentMinutes = date.hour * 60 + date.min
+	local currentSecs = date.sec
+	
+	local nextEventTime = nil
+	local nextEventSeconds = math.huge
+	local nextEventName = "Unknown"
+	
+	-- Get events for current timezone
+	local events = getEventsForTimezone()
+	
+	print("DEBUG: Current time in minutes: " .. currentMinutes .. ", seconds: " .. currentSecs)
+	
+	-- Check all events for the next occurrence
+	for eventName, times in pairs(events) do
+		for _, eventMinutes in ipairs(times) do
+			local secondsUntilEvent
+			
+			if eventMinutes > currentMinutes then
+				-- Event is later today
+				secondsUntilEvent = (eventMinutes - currentMinutes) * 60 - currentSecs
+			else
+				-- Event is tomorrow
+				secondsUntilEvent = ((24 * 60 - currentMinutes) + eventMinutes) * 60 - currentSecs
+			end
+			
+			if secondsUntilEvent > 0 and secondsUntilEvent < nextEventSeconds then
+				nextEventSeconds = secondsUntilEvent
+				nextEventName = eventName
+				nextEventTime = eventMinutes
+				print("DEBUG: Found event " .. eventName .. " at " .. eventMinutes .. " minutes, " .. secondsUntilEvent .. " seconds away")
+			end
+		end
+	end
+	
+	-- if we never found a next event (shouldn't happen) provide sensible defaults
+	if nextEventSeconds == math.huge then
+		nextEventName = "None"
+		nextEventSeconds = 0
+		nextEventTime = currentMinutes
+		print("DEBUG: No events found, using defaults")
+	end
+	
+	print("DEBUG: Returning " .. nextEventName .. " with " .. nextEventSeconds .. " seconds until event")
+	return nextEventName, nextEventSeconds, minutesToTime(nextEventTime or currentMinutes)
+end
+
+---Set the current timezone
+---@param timezone string
+function EventTimer.setTimezone(timezone)
+	if TIMEZONES[timezone] ~= nil then
+		EventTimer.currentTimezone = timezone
+	end
+end
+
+---Get available timezones
+---@return table
+function EventTimer.getTimezones()
+	local zones = {}
+	for tz, _ in pairs(TIMEZONES) do
+		table.insert(zones, tz)
+	end
+	table.sort(zones)
+	return zones
+end
+
+---Format seconds into readable countdown
+---@param seconds number
+---@return string
+function EventTimer.formatCountdown(seconds)
+	if seconds < 0 then
+		return "Happening Now!"
+	end
+	
+	local hours = math.floor(seconds / 3600)
+	local minutes = math.floor((seconds % 3600) / 60)
+	local secs = math.floor(seconds % 60)
+	
+	if hours > 0 then
+		return string.format("%dh %dm %ds", hours, minutes, secs)
+	elseif minutes > 0 then
+		return string.format("%dm %ds", minutes, secs)
+	else
+		return string.format("%ds", secs)
+	end
+end
+
+return EventTimer
 end)
 return __bundle_require("__root")
