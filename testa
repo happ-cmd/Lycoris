@@ -2486,10 +2486,14 @@ return LPH_NO_VIRTUALIZE(function()
 				ZIndex = 110,
 				Parent = Library.KeybindContainer,
 			}, true)
-	-- if this keypicker has no UI (i.e. toggle keys like keybind list), make sure its label is still visible
-	if Info.NoUI and Idx == "KeybindList" then
-		ContainerLabel.Visible = true
-	end
+
+			local Modes = Info.Modes or { "Always", "Toggle", "Hold", "Off" }
+			local ModeButtons = {}
+
+			function KeyPicker:DoClick()
+				if ParentObj.Type == "Toggle" and KeyPicker.SyncToggleState then
+					ParentObj:SetValue(not ParentObj.Value)
+				end
 
 				Library:SafeCallback("KeyPicker_Callback" .. "_" .. (Idx or ""), KeyPicker.Callback, KeyPicker.Toggled)
 				Library:SafeCallback("KeyPicker_Clicked" .. "_" .. (Idx or ""), KeyPicker.Clicked, KeyPicker.Toggled)
@@ -2560,9 +2564,9 @@ return LPH_NO_VIRTUALIZE(function()
 
 				ContainerLabel.Text = string.format("[%s] %s (%s)", KeyPicker.Value, Info.Text, KeyPicker.Mode)
 
-				-- only display keybind entries when they are active/enabled
-				-- keep the special NoUI KeybindList visible (it's a global toggle-like entry)
-				ContainerLabel.Visible = State or (Info.NoUI and Idx == "KeybindList")
+				ContainerLabel.Visible = true
+				ContainerLabel.TextColor3 = State and Library.AccentColor or Library.FontColor
+
 				Library.RegistryMap[ContainerLabel].Properties.TextColor3 = State and "AccentColor" or "FontColor"
 
 				local YSize = 0
@@ -75609,10 +75613,10 @@ return LPH_NO_VIRTUALIZE(function()
 			local data = {
 				objects = {},
 				keybindFramePosition = uDIm2Export(self.Library.KeybindFrame.Position),
-			keybindFrameVisible = self.Library.KeybindFrame.Visible,
-			watermarkFramePosition = uDIm2Export(self.Library.Watermark.Position),
-			eventTimerFramePosition = uDIm2Export(self.Library.EventTimerFrame.Position),
-			eventTimerFrameVisible = self.Library.EventTimerFrame.Visible,
+				watermarkFramePosition = uDIm2Export(self.Library.Watermark.Position),
+				infoLoggerFramePosition = uDIm2Export(self.Library.InfoLoggerFrame.Position),
+				infoLoggerBlacklistHistory = self.Library.InfoLoggerData.KeyBlacklistHistory,
+				infoLoggerBlacklist = self.Library.InfoLoggerData.KeyBlacklistList,
 				infoLoggerCycle = self.Library.InfoLoggerData.InfoLoggerCycle,
 				animationVisualizerFramePosition = uDIm2Export(self.Library.AnimationVisualizerFrame.Position),
 				overrideData = self.Library.OverrideData,
@@ -75664,18 +75668,12 @@ return LPH_NO_VIRTUALIZE(function()
 			if decoded.keybindFramePosition then
 				self.Library.KeybindFrame.Position = uDim2Import(decoded.keybindFramePosition)
 			end
-		if decoded.keybindFrameVisible ~= nil then
-			self.Library.KeybindFrame.Visible = decoded.keybindFrameVisible
-		end
 
-		if decoded.watermarkFramePosition then
-			self.Library.Watermark.Position = uDim2Import(decoded.watermarkFramePosition)
-		end
-		if decoded.eventTimerFramePosition then
-			self.Library.EventTimerFrame.Position = uDim2Import(decoded.eventTimerFramePosition)
-		end
-		if decoded.eventTimerFrameVisible ~= nil then
-			self.Library.EventTimerFrame.Visible = decoded.eventTimerFrameVisible
+			if decoded.watermarkFramePosition then
+				self.Library.Watermark.Position = uDim2Import(decoded.watermarkFramePosition)
+			end
+
+			if decoded.infoLoggerFramePosition then
 				self.Library.InfoLoggerFrame.Position = uDim2Import(decoded.infoLoggerFramePosition)
 			end
 
