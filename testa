@@ -1516,6 +1516,9 @@ return LPH_NO_VIRTUALIZE(function()
 
 					RenderStepped:Wait()
 				end
+
+				-- user released mouse, update config if possible
+				Library:AttemptSave()
 			end
 		end)
 	end
@@ -71935,9 +71938,9 @@ onWorkspaceChildAdded = LPH_NO_VIRTUALIZE(function(child)
 	--	return emplaceObject(child, ModelESP.new("GuildBanner", child, "Guild Banner"))
 	--end
 
-	-- if name == "Obelisk" then
-	--	return emplaceObject(child, ObeliskESP.new("Obelisk", child, "Obelisk"))
-	--end
+	if name == "Obelisk" then
+	return emplaceObject(child, ObeliskESP.new("Obelisk", child, "Obelisk"))
+	end
 
 	-- if name:match("ArmorBrick") then
 	--	local billboardGui = child:FindFirstChild("BillboardGui")
@@ -75614,15 +75617,15 @@ return LPH_NO_VIRTUALIZE(function()
 				objects = {},
 				keybindFramePosition = uDIm2Export(self.Library.KeybindFrame.Position),
 				watermarkFramePosition = uDIm2Export(self.Library.Watermark.Position),
-				infoLoggerFramePosition = uDIm2Export(self.Library.InfoLoggerFrame.Position),
-				infoLoggerBlacklistHistory = self.Library.InfoLoggerData.KeyBlacklistHistory,
-				infoLoggerBlacklist = self.Library.InfoLoggerData.KeyBlacklistList,
-				infoLoggerCycle = self.Library.InfoLoggerData.InfoLoggerCycle,
-				animationVisualizerFramePosition = uDIm2Export(self.Library.AnimationVisualizerFrame.Position),
-				overrideData = self.Library.OverrideData,
-			}
+			eventTimerFramePosition = uDIm2Export(self.Library.EventTimerFrame.Position),
+			infoLoggerFramePosition = uDIm2Export(self.Library.InfoLoggerFrame.Position),
+			infoLoggerBlacklistHistory = self.Library.InfoLoggerData.KeyBlacklistHistory,
+			infoLoggerBlacklist = self.Library.InfoLoggerData.KeyBlacklistList,
+			infoLoggerCycle = self.Library.InfoLoggerData.InfoLoggerCycle,
+			overrideData = self.Library.OverrideData,
+		}
 
-			for idx, toggle in next, Toggles do
+		for idx, toggle in next, Toggles do
 				if self.Ignore[idx] then
 					continue
 				end
@@ -75673,9 +75676,9 @@ return LPH_NO_VIRTUALIZE(function()
 				self.Library.Watermark.Position = uDim2Import(decoded.watermarkFramePosition)
 			end
 
-			if decoded.infoLoggerFramePosition then
-				self.Library.InfoLoggerFrame.Position = uDim2Import(decoded.infoLoggerFramePosition)
-			end
+		if decoded.eventTimerFramePosition then
+			self.Library.EventTimerFrame.Position = uDim2Import(decoded.eventTimerFramePosition)
+		end
 
 			if decoded.infoLoggerBlacklistHistory then
 				self.Library.InfoLoggerData.KeyBlacklistHistory = decoded.infoLoggerBlacklistHistory
@@ -76915,7 +76918,7 @@ function VisualsTab.init(window)
 	VisualsTab.initBaseESPSection("Whirlpool", tab:AddDynamicGroupbox("Whirlpool ESP"))
 	VisualsTab.initBaseESPSection("OwlFeathers", tab:AddDynamicGroupbox("Owl Feathers ESP"))
 	VisualsTab.initBaseESPSection("GuildDoor", tab:AddDynamicGroupbox("Guild Door ESP"))
-	-- VisualsTab.addObeliskESP(VisualsTab.initBaseESPSection("Obelisk", tab:AddDynamicGroupbox("Obelisk ESP")))
+	VisualsTab.addObeliskESP(VisualsTab.initBaseESPSection("Obelisk", tab:AddDynamicGroupbox("Obelisk ESP")))
 	VisualsTab.addFilterESP(VisualsTab.initBaseESPSection("Ingredient", tab:AddDynamicGroupbox("Ingredient ESP")))
 	VisualsTab.initBaseESPSection("BellMeteor", tab:AddDynamicGroupbox("Bell Meteor ESP"))
 end
